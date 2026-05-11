@@ -3,17 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const { response, user } = await updateSession(request)
 
-  // Redirect unauthenticated users away from protected routes
-  if (pathname.startsWith('/dashboard') && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // Redirect authenticated users away from login
-  if (pathname === '/login' && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
+  // Always run updateSession to refresh JWT cookies
+  const { response } = await updateSession(request)
 
   return response
 }

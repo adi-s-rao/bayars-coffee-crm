@@ -45,9 +45,14 @@ export default function LoginPage() {
     setSiLoading(true)
     setSiError('')
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: siEmail,
       password: siPassword
+    })
+
+    console.log('SIGNIN result:', {
+      session: data?.session?.access_token?.slice(0, 20),
+      error: error?.message
     })
 
     if (error) {
@@ -56,8 +61,7 @@ export default function LoginPage() {
       return
     }
 
-    // Do NOT use router.push — use window.location for a hard
-    // navigation that forces the server to re-read cookies
+    // Hard navigation - forces fresh cookie read on server
     window.location.href = '/dashboard'
   }
 
