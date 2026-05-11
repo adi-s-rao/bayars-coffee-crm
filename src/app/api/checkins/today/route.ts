@@ -28,7 +28,7 @@ export async function GET() {
       checkInCount,
       totalKm: Math.round(totalKm * 10) / 10,
     })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Internal server error' }, { status: 500 })
   }
 }
