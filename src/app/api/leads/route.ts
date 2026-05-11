@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { LeadStatus, Profile } from '@/types'
@@ -47,6 +48,20 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Ensure a profiles row exists before inserting — leads.created_by has a
+    // FK → profiles(id). Users who signed up before the trigger was installed
+    // have no row, which causes a FK violation on insert. ignoreDuplicates
+    // preserves any existing role/data and is a no-op if the row is there.
+    const admin = createAdminClient()
+    await admin.from('profiles').upsert({
+      id: user.id,
+      email: user.email ?? '',
+      full_name: (user.user_metadata?.full_name as string | undefined)
+        ?? user.email?.split('@')[0]
+        ?? 'User',
+      role: 'rep',
+    }, { onConflict: 'id', ignoreDuplicates: true })
 
     const body = await request.json() as Record<string, unknown>
 

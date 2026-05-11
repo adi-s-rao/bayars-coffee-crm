@@ -56,6 +56,18 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createAdminClient()
+
+    // Ensure profiles row exists before inserting — checkins.user_id has a
+    // FK → profiles(id). Same issue as leads: users pre-trigger have no row.
+    await admin.from('profiles').upsert({
+      id: user.id,
+      email: user.email ?? '',
+      full_name: (user.user_metadata?.full_name as string | undefined)
+        ?? user.email?.split('@')[0]
+        ?? 'User',
+      role: 'rep',
+    }, { onConflict: 'id', ignoreDuplicates: true })
+
     let distanceKm: number | null = null
 
     // Calculate distance from previous checkin (skip for start_day)
