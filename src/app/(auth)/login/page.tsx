@@ -45,7 +45,9 @@ export default function LoginPage() {
     setSiLoading(true)
     setSiError('')
     const { data, error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword })
-    console.log('Sign in result:', { data, error })
+    console.log('SIGNIN DATA:', JSON.stringify(data))
+    console.log('SIGNIN ERROR:', JSON.stringify(error))
+    console.log('SIGNIN SESSION:', JSON.stringify(data?.session))
     if (error) { setSiError(error.message); setSiLoading(false); return }
     router.refresh()
     await new Promise(r => setTimeout(r, 150))

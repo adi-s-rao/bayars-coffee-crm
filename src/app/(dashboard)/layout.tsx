@@ -11,6 +11,9 @@ export default async function DashboardLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  console.log('LAYOUT USER:', user?.id ?? 'null')
+  console.log('LAYOUT USER EMAIL:', user?.email ?? 'null')
+
   if (!user) redirect('/login')
 
   const { data } = await supabase
