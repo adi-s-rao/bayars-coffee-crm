@@ -202,6 +202,67 @@ The `handle_new_user` trigger runs as `SECURITY DEFINER` with `search_path = pub
 - Read is open to the public (serves menu photos in the UI)
 - Bucket created by the migration SQL (`INSERT … ON CONFLICT DO NOTHING` for idempotency)
 
+## Component Map
+
+### Dashboard Shell (`src/components/dashboard/DashboardShell.tsx`)
+Client Component. Wraps all dashboard pages. Renders:
+- **Top Navbar**: hamburger icon, app name, bell, avatar with initials
+- **Day Status Bar**: Start/End Day buttons with GPS check-in; persists state to `localStorage('bayars_day_state')` across refreshes
+- **Bottom Nav**: Home / Map / Calendar / Reports — active tab highlighted in amber using `usePathname`
+
+### LeadListView (`src/components/dashboard/LeadListView.tsx`)
+Client Component. Receives `leads` and `profile` from the Server Page.
+- Stats row: Leads Today (from created_at), Check-ins (--, pending), KM Today (--, pending)
+- Search: filters leads by `cafe_name` substring
+- Filter pills: All / Cold Lead / Hot Lead / Demo / Customer / Competitor
+- Lead cards: status dot + badge, POC info, last-visit approximation from `updated_at`
+- Floating `+` button opens NewLeadModal
+- Orchestrates open/close state for all three modals
+
+### LeadDetailsDrawer (`src/components/dashboard/LeadDetailsDrawer.tsx`)
+Client Component. Right-side panel (full-width on mobile, 400px on desktop) with animated tab underline.
+- **Overview tab**: address, POC, editable status dropdown, editable remarks textarea
+- **Coffee Details tab**: click-to-edit inline fields for machine, bean brand, pricing
+- **Activity tab**: fetches `GET /api/leads/[id]/checkins` on open, renders timeline with type-colored dots
+- Footer: Save Changes (PATCH /api/leads/[id]) + Delete Lead (DELETE)
+
+### CheckInModal (`src/components/dashboard/CheckInModal.tsx`)
+Client Component. Bottom-sheet on mobile, centered dialog on desktop.
+- Type selector: Visit / Demo / Workshop
+- GPS capture button → shows green confirmation on success
+- Remarks, gate pass, beans-used toggle (expands to brand + amount fields)
+- Submits to `POST /api/checkins`; disabled until GPS captured
+
+### NewLeadModal (`src/components/dashboard/NewLeadModal.tsx`)
+Client Component. Same layout as CheckInModal.
+- Fields: Cafe Name, Status (select), GPS + auto-filled address (via `/api/geocode` proxy), POC Name, POC Contact (validated regex), Remarks
+- Submits to `POST /api/leads`; calls `onCreated` to add to parent list state
+
+## Distance Calculation System
+
+Every check-in records GPS coordinates. The `POST /api/checkins` route:
+1. Queries the most recent check-in for the same `user_id`
+2. If the previous check-in has GPS data, calculates Haversine great-circle distance
+3. Stores result in `distance_from_previous_km` (rounded to 2 decimal places)
+4. Skips distance calculation for `start_day` type (it's the anchor point)
+
+This enables per-day KM tracking (sum all checkins' distances for today).
+
+**Haversine formula** is computed server-side in the route handler — no external geocoding service needed for this calculation.
+
+## GPS Attendance Flow
+
+1. Rep clicks **Start Day** → browser requests GPS permission
+2. On success: `POST /api/checkins { type: 'start_day', lat, lng }` — server calculates 0 distance (first check-in)
+3. State saved to `localStorage('bayars_day_state')` with `startTime` and `startCheckinId`
+4. Day Status Bar turns green with pulsing dot and formatted start time
+5. Throughout the day, every `visit/demo/workshop` check-in auto-calculates distance from the previous entry
+6. Rep clicks **End Day** → GPS captured → `POST /api/checkins { type: 'end_day' }` → localStorage cleared
+
+## Geocoding
+
+Reverse geocoding is proxied through `/api/geocode?lat=X&lon=Y` to allow setting the required `User-Agent` header (browsers block this from client-side fetch). Uses Nominatim OpenStreetMap API.
+
 ## Deployment
 
 - **Frontend**: Vercel (connect GitHub repo, set env vars in project settings)

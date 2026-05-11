@@ -1,0 +1,106 @@
+import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import type { CheckInType } from '@/types'
+
+const VALID_TYPES: CheckInType[] = ['visit', 'demo', 'workshop', 'start_day', 'end_day']
+
+function isValidType(t: string): t is CheckInType {
+  return (VALID_TYPES as string[]).includes(t)
+}
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(a))
+}
+
+interface CheckInBody {
+  type: string
+  latitude?: number
+  longitude?: number
+  lead_id?: string
+  user_id: string
+  user_name: string
+  remarks?: string
+  gate_pass_number?: string
+  beans_used?: boolean
+  bean_brand?: string
+  bean_amount_kg?: number
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Verify authenticated session
+    const serverClient = await createClient()
+    const { data: { user } } = await serverClient.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json() as CheckInBody
+
+    if (!isValidType(body.type)) {
+      return NextResponse.json({ error: 'Invalid checkin type' }, { status: 400 })
+    }
+
+    // Security: user can only log checkins for themselves
+    if (body.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const admin = createAdminClient()
+    let distanceKm: number | null = null
+
+    // Calculate distance from previous checkin (skip for start_day)
+    if (body.type !== 'start_day' && body.latitude != null && body.longitude != null) {
+      const { data: prev } = await admin
+        .from('checkins')
+        .select('latitude, longitude')
+        .eq('user_id', body.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      const prevRow = prev as { latitude: number | null; longitude: number | null } | null
+      if (prevRow?.latitude != null && prevRow?.longitude != null) {
+        distanceKm = Math.round(
+          haversineKm(prevRow.latitude, prevRow.longitude, body.latitude, body.longitude) * 100
+        ) / 100
+      }
+    }
+
+    const { data, error } = await admin
+      .from('checkins')
+      .insert({
+        type: body.type,
+        latitude: body.latitude ?? null,
+        longitude: body.longitude ?? null,
+        lead_id: body.lead_id ?? null,
+        user_id: body.user_id,
+        user_name: body.user_name,
+        remarks: body.remarks ?? null,
+        gate_pass_number: body.gate_pass_number ?? null,
+        beans_used: body.beans_used ?? false,
+        bean_brand: body.bean_brand ?? null,
+        bean_amount_kg: body.bean_amount_kg ?? null,
+        distance_from_previous_km: distanceKm,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, checkin: data })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

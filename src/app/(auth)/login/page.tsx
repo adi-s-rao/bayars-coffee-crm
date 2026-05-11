@@ -1,233 +1,291 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Coffee, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Coffee, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+type Tab = 'signin' | 'signup'
 
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [tab, setTab] = useState<Tab>('signin')
+  const signInRef = useRef<HTMLButtonElement>(null)
+  const signUpRef = useRef<HTMLButtonElement>(null)
+  const [underline, setUnderline] = useState({ left: 0, width: 0 })
+
   // Sign-in state
-  const [signInEmail, setSignInEmail] = useState('')
-  const [signInPassword, setSignInPassword] = useState('')
-  const [signInLoading, setSignInLoading] = useState(false)
-  const [signInError, setSignInError] = useState('')
+  const [siEmail, setSiEmail] = useState('')
+  const [siPassword, setSiPassword] = useState('')
+  const [siShowPw, setSiShowPw] = useState(false)
+  const [siLoading, setSiLoading] = useState(false)
+  const [siError, setSiError] = useState('')
 
   // Sign-up state
-  const [signUpName, setSignUpName] = useState('')
-  const [signUpEmail, setSignUpEmail] = useState('')
-  const [signUpPassword, setSignUpPassword] = useState('')
-  const [signUpLoading, setSignUpLoading] = useState(false)
-  const [signUpError, setSignUpError] = useState('')
-  const [signUpSuccess, setSignUpSuccess] = useState(false)
+  const [suName, setSuName] = useState('')
+  const [suEmail, setSuEmail] = useState('')
+  const [suPassword, setSuPassword] = useState('')
+  const [suShowPw, setSuShowPw] = useState(false)
+  const [suLoading, setSuLoading] = useState(false)
+  const [suError, setSuError] = useState('')
+  const [suSuccess, setSuSuccess] = useState(false)
+
+  // Measure underline position on tab change
+  useEffect(() => {
+    const ref = tab === 'signin' ? signInRef : signUpRef
+    if (ref.current) {
+      setUnderline({ left: ref.current.offsetLeft, width: ref.current.offsetWidth })
+    }
+  }, [tab])
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
-    setSignInLoading(true)
-    setSignInError('')
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: signInEmail,
-      password: signInPassword,
-    })
-
-    if (error) {
-      setSignInError(error.message)
-      setSignInLoading(false)
-      return
-    }
-
+    setSiLoading(true)
+    setSiError('')
+    const { error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword })
+    if (error) { setSiError(error.message); setSiLoading(false); return }
     router.push('/dashboard')
   }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
-    setSignUpLoading(true)
-    setSignUpError('')
-
+    setSuLoading(true)
+    setSuError('')
     const { error } = await supabase.auth.signUp({
-      email: signUpEmail,
-      password: signUpPassword,
-      options: {
-        data: { full_name: signUpName },
-      },
+      email: suEmail,
+      password: suPassword,
+      options: { data: { full_name: suName } },
     })
-
-    if (error) {
-      setSignUpError(error.message)
-      setSignUpLoading(false)
-      return
-    }
-
-    setSignUpSuccess(true)
-    setSignUpLoading(false)
+    if (error) { setSuError(error.message); setSuLoading(false); return }
+    setSuSuccess(true)
+    setSuLoading(false)
   }
 
+  const suCanSubmit = suName.trim().length > 0 && suEmail.trim().length > 0 && suPassword.length >= 8
+
+  const inputClass =
+    'w-full bg-[#111111] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-[#555] focus:border-[#D97706] focus:ring-2 focus:ring-amber-600/15'
+  const labelClass = 'block text-[12px] font-medium text-[#A0A0A0] mb-1.5'
+  const btnAmber =
+    'w-full bg-[#D97706] hover:bg-[#B45309] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2'
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <div className="flex items-center gap-2">
-            <Coffee className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold tracking-tight">
-              Bayar&apos;s Coffee CRM
-            </span>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0F0F0F] px-6">
+      {/* Card */}
+      <div className="w-full max-w-[420px] rounded-2xl border border-[#2A2A2A] bg-[#1A1A1A] p-8">
+        {/* Brand */}
+        <div className="mb-2 flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-600/25 bg-amber-600/10">
+            <Coffee size={15} color="#D97706" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Sales force automation for your cafe team
-          </p>
+          <span>
+            <span className="text-base font-bold text-white">Bayar&apos;s Coffee</span>
+            <span className="ml-1 text-base font-medium text-[#7A7A7A]">CRM</span>
+          </span>
+        </div>
+        <p className="mb-7 text-[13px] text-[#7A7A7A]">Field Sales Platform</p>
+
+        {/* Tab switcher */}
+        <div className="relative mb-6 flex gap-6 border-b border-[#2A2A2A]">
+          <button
+            ref={signInRef}
+            type="button"
+            onClick={() => setTab('signin')}
+            className={`pb-3 text-sm transition-colors ${tab === 'signin' ? 'font-medium text-white' : 'text-[#7A7A7A]'}`}
+          >
+            Sign In
+          </button>
+          <button
+            ref={signUpRef}
+            type="button"
+            onClick={() => setTab('signup')}
+            className={`pb-3 text-sm transition-colors ${tab === 'signup' ? 'font-medium text-white' : 'text-[#7A7A7A]'}`}
+          >
+            Sign Up
+          </button>
+          {/* Animated amber underline */}
+          <div
+            className="absolute bottom-[-1px] h-0.5 rounded-sm bg-[#D97706] transition-all duration-200"
+            style={{ left: underline.left, width: underline.width }}
+          />
         </div>
 
-        {/* Card */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="p-6">
-            <Tabs defaultValue="signin">
-              <TabsList className="mb-6 w-full">
-                <TabsTrigger value="signin" className="flex-1">
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="flex-1">
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
+        {/* ── Sign In ── */}
+        {tab === 'signin' && (
+          <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="si-email" className={labelClass}>Email</label>
+              <input
+                id="si-email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                required
+                value={siEmail}
+                onChange={e => setSiEmail(e.target.value)}
+                className={inputClass}
+              />
+            </div>
 
-              {/* ── Sign In ── */}
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      required
-                      value={signInEmail}
-                      onChange={(e) => setSignInEmail(e.target.value)}
-                    />
-                  </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="si-password" className={labelClass.replace('mb-1.5', '')}>Password</label>
+                <button
+                  type="button"
+                  className="text-[12px] font-medium text-[#D97706] hover:text-[#B45309] transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  id="si-password"
+                  type={siShowPw ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                  value={siPassword}
+                  onChange={e => setSiPassword(e.target.value)}
+                  className={`${inputClass} pr-10`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSiShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-[#A0A0A0] transition-colors"
+                  tabIndex={-1}
+                >
+                  {siShowPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
 
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      required
-                      value={signInPassword}
-                      onChange={(e) => setSignInPassword(e.target.value)}
-                    />
-                  </div>
+            {siError && (
+              <p className="flex items-center gap-1.5 text-[13px] text-red-400">
+                <AlertCircle size={14} />
+                {siError}
+              </p>
+            )}
 
-                  {signInError && (
-                    <p className="text-sm text-destructive">{signInError}</p>
-                  )}
+            <button type="submit" disabled={siLoading} className={btnAmber}>
+              {siLoading && <Loader2 size={16} className="animate-spin" />}
+              {siLoading ? 'Signing in…' : 'Sign In'}
+            </button>
 
-                  <Button type="submit" className="w-full" disabled={signInLoading}>
-                    {signInLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Sign In
-                  </Button>
-                </form>
+            <p className="text-center text-[13px] text-[#7A7A7A]">
+              New to Bayar&apos;s Coffee?{' '}
+              <button
+                type="button"
+                onClick={() => setTab('signup')}
+                className="font-medium text-[#D97706] hover:text-[#B45309] transition-colors"
+              >
+                Create an account
+              </button>
+            </p>
+          </form>
+        )}
 
-                <p className="mt-5 text-center text-xs text-muted-foreground">
-                  Contact your manager if you don&apos;t have an account.
+        {/* ── Sign Up ── */}
+        {tab === 'signup' && (
+          <>
+            {suSuccess ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <CheckCircle2 size={48} className="text-green-400" />
+                <h3 className="text-lg font-semibold text-white">Account created!</h3>
+                <p className="text-[14px] text-[#7A7A7A]">
+                  Check your email to confirm your account.
                 </p>
-              </TabsContent>
+              </div>
+            ) : (
+              <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+                <div>
+                  <label htmlFor="su-name" className={labelClass}>Full Name</label>
+                  <input
+                    id="su-name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Adith Rao"
+                    required
+                    value={suName}
+                    onChange={e => setSuName(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
 
-              {/* ── Sign Up ── */}
-              <TabsContent value="signup">
-                {signUpSuccess ? (
-                  <div className="flex flex-col items-center gap-3 py-4 text-center">
-                    <Coffee className="h-8 w-8 text-primary" />
-                    <p className="font-semibold">Check your email!</p>
-                    <p className="text-sm text-muted-foreground">
-                      We&apos;ve sent a confirmation link to{' '}
-                      <span className="font-medium text-foreground">
-                        {signUpEmail}
-                      </span>
-                      . Click it to activate your account.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSignUp} className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Adith Rao"
-                        autoComplete="name"
-                        required
-                        value={signUpName}
-                        onChange={(e) => setSignUpName(e.target.value)}
-                      />
-                    </div>
+                <div>
+                  <label htmlFor="su-email" className={labelClass}>Email</label>
+                  <input
+                    id="su-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    value={suEmail}
+                    onChange={e => setSuEmail(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
 
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        autoComplete="email"
-                        required
-                        value={signUpEmail}
-                        onChange={(e) => setSignUpEmail(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                        minLength={6}
-                        required
-                        value={signUpPassword}
-                        onChange={(e) => setSignUpPassword(e.target.value)}
-                      />
-                    </div>
-
-                    {signUpError && (
-                      <p className="text-sm text-destructive">{signUpError}</p>
-                    )}
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={signUpLoading}
+                <div>
+                  <label htmlFor="su-password" className={labelClass}>Password</label>
+                  <div className="relative">
+                    <input
+                      id="su-password"
+                      type={suShowPw ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      minLength={8}
+                      required
+                      value={suPassword}
+                      onChange={e => setSuPassword(e.target.value)}
+                      className={`${inputClass} pr-10`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSuShowPw(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-[#A0A0A0] transition-colors"
+                      tabIndex={-1}
                     >
-                      {signUpLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      Create Account
-                    </Button>
-                  </form>
-                )}
+                      {suShowPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
 
-                {!signUpSuccess && (
-                  <p className="mt-5 text-center text-xs text-muted-foreground">
-                    By signing up you agree to use this app for Bayar&apos;s
-                    Coffee sales activities only.
+                {suError && (
+                  <p className="flex items-center gap-1.5 text-[13px] text-red-400">
+                    <AlertCircle size={14} />
+                    {suError}
                   </p>
                 )}
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
+
+                <button type="submit" disabled={suLoading || !suCanSubmit} className={btnAmber}>
+                  {suLoading && <Loader2 size={16} className="animate-spin" />}
+                  {suLoading ? 'Creating account…' : 'Create Account'}
+                </button>
+
+                <p className="text-center text-[13px] text-[#7A7A7A]">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setTab('signin')}
+                    className="font-medium text-[#D97706] hover:text-[#B45309] transition-colors"
+                  >
+                    Sign in
+                  </button>
+                </p>
+
+                <p className="text-center text-[11px] text-[#555]">
+                  By creating an account, you agree to our Terms and Privacy Policy.
+                </p>
+              </form>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Footer */}
+      <p className="mt-5 text-center text-[12px] text-[#444]">Bayar&apos;s Coffee © 2025</p>
     </div>
   )
 }

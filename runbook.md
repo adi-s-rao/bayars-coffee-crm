@@ -80,6 +80,47 @@ Project scaffolded with Next.js 16 (latest), TypeScript strict, Tailwind v4, sha
 
 ---
 
+## Core UI Build
+
+### 2026-05-11 — Components created
+
+**Files created:**
+- `src/lib/supabase/admin.ts` — service role client for checkin insertion
+- `src/app/api/checkins/route.ts` — POST with Haversine distance
+- `src/app/api/leads/route.ts` — GET (role-aware) + POST
+- `src/app/api/leads/[id]/route.ts` — GET + PATCH + DELETE (RLS via server client)
+- `src/app/api/leads/[id]/checkins/route.ts` — GET activity for drawer
+- `src/app/api/geocode/route.ts` — Nominatim reverse geocode proxy
+- `src/components/dashboard/DashboardShell.tsx` — layout shell
+- `src/components/dashboard/LeadListView.tsx` — main lead list
+- `src/components/dashboard/LeadDetailsDrawer.tsx` — edit drawer
+- `src/components/dashboard/CheckInModal.tsx` — GPS check-in
+- `src/components/dashboard/NewLeadModal.tsx` — create lead
+
+---
+
+### 2026-05-11 — GPS + Haversine approach
+
+**Approach chosen:** Server-side Haversine formula in the checkins route.
+
+**Why Haversine over PostGIS:** No PostGIS extension needed on the Supabase free tier. Haversine is accurate to ~0.3% for distances under 1000km, which is sufficient for city-level field rep tracking. If precision becomes a concern, a PostGIS `ST_DistanceSphere` call can replace the JS implementation.
+
+**Why server-side:** The distance is a derived value that should be immutable once stored. Computing it server-side (not client-side) prevents a rep from reporting a manipulated distance.
+
+---
+
+### 2026-05-11 — Schedule button placeholder
+
+**Note:** The "Schedule" button in lead cards shows `toast.info('Schedule feature coming soon')`. A `ScheduleModal` component was deferred — it requires a date picker and lead `scheduled_date`/`scheduled_type` update flow.
+
+---
+
+### 2026-05-11 — updated_at used for "Last visit" approximation
+
+**Note:** The lead card's "Last visit" label derives from `updated_at`, not from checkin timestamps. This is an approximation — `updated_at` changes on any field edit, not just visits. Accurate last-visit display requires a join to the checkins table. Deferred until the dashboard stats row is wired up.
+
+---
+
 ## Future entries
 
 Use this format:
