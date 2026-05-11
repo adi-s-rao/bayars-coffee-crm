@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LeadListView from '@/components/dashboard/LeadListView'
-import type { Lead, Profile } from '@/types'
+import type { Lead, Profile, UserRole } from '@/types'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -14,8 +14,18 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  const profile = profileData as Profile | null
-  if (!profile) redirect('/login')
+  // Use synthetic profile if DB row missing — same pattern as layout.tsx.
+  // Never redirect to /login here: the user IS authenticated, only the
+  // profiles row is absent (trigger hadn't fired for older accounts).
+  const profile: Profile = (profileData as Profile | null) ?? {
+    id: user.id,
+    full_name: (user.user_metadata?.full_name as string) ??
+               user.email?.split('@')[0] ?? 'User',
+    email: user.email ?? '',
+    role: 'rep' as UserRole,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
 
   const query = supabase
     .from('leads')
