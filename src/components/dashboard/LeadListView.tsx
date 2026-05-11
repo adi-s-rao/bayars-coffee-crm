@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Coffee, Phone, Plus, Search, User } from 'lucide-react'
 import { formatDistanceToNow, isToday } from 'date-fns'
 import { toast } from 'sonner'
 import type { Lead, LeadStatus, Profile } from '@/types'
-import LeadDetailsDrawer from './LeadDetailsDrawer'
 import CheckInModal from './CheckInModal'
+import LeadDetailsDrawer from './LeadDetailsDrawer'
 import NewLeadModal from './NewLeadModal'
+import ScheduleModal from './ScheduleModal'
 
 interface Props {
   leads: Lead[]
@@ -45,6 +46,15 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false)
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false)
+  const [todayStats, setTodayStats] = useState<{ checkInCount: number; totalKm: number } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/checkins/today')
+      .then(r => r.json())
+      .then((d: { checkInCount: number; totalKm: number }) => setTodayStats(d))
+      .catch(() => {})
+  }, [])
 
   const leadsToday = leads.filter(l => isToday(new Date(l.created_at))).length
 
@@ -62,6 +72,16 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   function openCheckIn(lead: Lead) {
     setSelectedLead(lead)
     setIsCheckInOpen(true)
+  }
+
+  function openSchedule(lead: Lead) {
+    setSelectedLead(lead)
+    setIsScheduleOpen(true)
+  }
+
+  function handleLeadScheduled(updated: Lead) {
+    setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
+    setSelectedLead(updated)
   }
 
   function handleLeadUpdate(updated: Lead) {
@@ -86,9 +106,9 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2.5 px-4 py-3.5">
         {[
-          { value: String(leadsToday), label: 'Leads Today' },
-          { value: '--',               label: 'Check-ins' },
-          { value: '--',               label: 'KM Today' },
+          { value: String(leadsToday),                                          label: 'Leads Today' },
+          { value: todayStats ? String(todayStats.checkInCount) : '--',         label: 'Check-ins' },
+          { value: todayStats ? todayStats.totalKm.toFixed(1) : '--',           label: 'KM Today' },
         ].map(({ value, label }) => (
           <div
             key={label}
@@ -205,7 +225,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('Schedule feature coming soon')}
+                      onClick={() => openSchedule(lead)}
                       className="rounded-md border border-[#2A2A2A] px-2.5 py-1 text-[11px] font-medium text-[#A0A0A0] hover:text-white transition-colors"
                     >
                       Schedule
@@ -249,6 +269,16 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
           lead={selectedLead}
           isOpen={isCheckInOpen}
           onClose={() => setIsCheckInOpen(false)}
+          profile={profile}
+        />
+      )}
+
+      {selectedLead && (
+        <ScheduleModal
+          lead={selectedLead}
+          isOpen={isScheduleOpen}
+          onClose={() => setIsScheduleOpen(false)}
+          onScheduled={handleLeadScheduled}
           profile={profile}
         />
       )}

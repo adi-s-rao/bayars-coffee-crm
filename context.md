@@ -212,12 +212,12 @@ Client Component. Wraps all dashboard pages. Renders:
 
 ### LeadListView (`src/components/dashboard/LeadListView.tsx`)
 Client Component. Receives `leads` and `profile` from the Server Page.
-- Stats row: Leads Today (from created_at), Check-ins (--, pending), KM Today (--, pending)
+- Stats row: Leads Today (from created_at), Check-ins (live from `/api/checkins/today`), KM Today (live from `/api/checkins/today`)
 - Search: filters leads by `cafe_name` substring
 - Filter pills: All / Cold Lead / Hot Lead / Demo / Customer / Competitor
 - Lead cards: status dot + badge, POC info, last-visit approximation from `updated_at`
 - Floating `+` button opens NewLeadModal
-- Orchestrates open/close state for all three modals
+- Orchestrates open/close state for all four modals (drawer, check-in, new lead, schedule)
 
 ### LeadDetailsDrawer (`src/components/dashboard/LeadDetailsDrawer.tsx`)
 Client Component. Right-side panel (full-width on mobile, 400px on desktop) with animated tab underline.
@@ -237,6 +237,14 @@ Client Component. Bottom-sheet on mobile, centered dialog on desktop.
 Client Component. Same layout as CheckInModal.
 - Fields: Cafe Name, Status (select), GPS + auto-filled address (via `/api/geocode` proxy), POC Name, POC Contact (validated regex), Remarks
 - Submits to `POST /api/leads`; calls `onCreated` to add to parent list state
+
+### ScheduleModal (`src/components/dashboard/ScheduleModal.tsx`)
+Client Component. Same bottom-sheet pattern as CheckInModal.
+- Visit type selector: Visit / Demo / Workshop
+- Native date picker (min = today) + time picker (defaults to 10:00)
+- Optional notes textarea
+- Submits PATCH `/api/leads/[id]` with `{ scheduled_date, scheduled_type }`
+- On success: calls `onScheduled(updatedLead)`, closes, shows "Visit scheduled!" toast
 
 ## Distance Calculation System
 
@@ -258,6 +266,17 @@ This enables per-day KM tracking (sum all checkins' distances for today).
 4. Day Status Bar turns green with pulsing dot and formatted start time
 5. Throughout the day, every `visit/demo/workshop` check-in auto-calculates distance from the previous entry
 6. Rep clicks **End Day** → GPS captured → `POST /api/checkins { type: 'end_day' }` → localStorage cleared
+
+## Today's Stats API
+
+`GET /api/checkins/today` — returns live stats for the authenticated rep for the current calendar day.
+
+Response: `{ checkInCount: number, totalKm: number }`
+
+- `checkInCount`: number of checkins with type `visit`, `demo`, or `workshop` (excludes `start_day`/`end_day`)
+- `totalKm`: sum of `distance_from_previous_km` across all today's checkins (rounded to 1 decimal)
+
+Queried on mount in `LeadListView` to power the Check-ins and KM Today stat cards.
 
 ## Geocoding
 

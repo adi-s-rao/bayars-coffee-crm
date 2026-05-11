@@ -121,6 +121,52 @@ Project scaffolded with Next.js 16 (latest), TypeScript strict, Tailwind v4, sha
 
 ---
 
+---
+
+## Smoke Test & Fixes
+
+### 2026-05-11 — Full smoke test after auth loop resolution
+
+All features tested after confirming login works end-to-end.
+
+**Check In modal** — WORKS. Profile upsert guard + admin client in `/api/checkins` ensures FK constraint is satisfied.
+
+**Lead Details Drawer (all tabs)** — WORKS. PATCH/DELETE use user-scoped client; RLS allows owner operations. Activity tab fetches `/api/leads/[id]/checkins`.
+
+**Start Day / End Day** — WORKS. Uses same checkins route.
+
+**Lead list / search / filters** — WORKS.
+
+**Root page redirect** — FIXED. Was using `getSession()` (reads local cookie only, no server verification). Replaced with `getUser()` which validates the JWT with Supabase servers.
+**Files changed:** `src/app/page.tsx`
+
+**Sign out** — FIXED. Avatar in DashboardShell was a static `div` with no click handler; the `/api/auth/signout` route existed but had no UI trigger. Converted avatar to a `button` that POSTs to signout and hard-navigates to `/login`.
+**Files changed:** `src/components/dashboard/DashboardShell.tsx`
+
+**POST /api/leads 500** — FIXED. `leads.created_by` and `checkins.user_id` both have FK → `profiles(id)`. Users who signed up before the `on_auth_user_created` trigger was installed had no `profiles` row, causing FK violations on every insert. Fixed by upserting the profile row via admin client (bypasses RLS; `ignoreDuplicates: true` preserves existing data) at the start of POST handlers.
+**Files changed:** `src/app/api/leads/route.ts`, `src/app/api/checkins/route.ts`
+
+**Dashboard 307 redirect loop** — FIXED. `(dashboard)/dashboard/page.tsx` had `if (!profile) redirect('/login')` with no fallback. Authenticated users with no profiles row hit an infinite redirect. Replaced with synthetic profile fallback (same pattern as layout.tsx).
+**Files changed:** `src/app/(dashboard)/dashboard/page.tsx`
+
+---
+
+### 2026-05-11 — Schedule modal built
+
+**Action:** Built `ScheduleModal.tsx` — bottom-sheet with visit type selector (Visit/Demo/Workshop), native date+time pickers, notes field. PATCHes `/api/leads/[id]` with `scheduled_date` (ISO) and `scheduled_type`. Wired into `LeadListView` replacing the "coming soon" toast.
+
+**Files changed:** `src/components/dashboard/ScheduleModal.tsx` (new), `src/components/dashboard/LeadListView.tsx`
+
+---
+
+### 2026-05-11 — Live stats for Check-ins and KM Today
+
+**Action:** Created `GET /api/checkins/today` route. Queries checkins for `user_id = auth.uid()` since today midnight. Returns `{ checkInCount, totalKm }`. `LeadListView` fetches on mount via `useEffect` and displays live values in the stats row.
+
+**Files changed:** `src/app/api/checkins/today/route.ts` (new), `src/components/dashboard/LeadListView.tsx`
+
+---
+
 ## Future entries
 
 Use this format:
