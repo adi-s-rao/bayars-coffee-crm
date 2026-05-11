@@ -10,32 +10,22 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
 
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  console.log('LAYOUT getUser result:', {
-    userId: user?.id,
-    email: user?.email,
-    error: error?.message
-  })
-
-  if (!user) {
-    console.log('LAYOUT: no user, redirecting to login')
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   let profile: Profile | null = null
 
   try {
-    const { data, error: profileError } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single()
 
-    console.log('LAYOUT profile fetch:', { data, error: profileError?.message })
     profile = data as Profile | null
-  } catch (e) {
-    console.log('LAYOUT profile fetch threw:', e)
+  } catch {
+    // profile stays null — synthetic fallback applied below
   }
 
   const finalProfile: Profile = profile ?? {
@@ -47,8 +37,6 @@ export default async function DashboardLayout({
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
-
-  console.log('LAYOUT: rendering dashboard for', finalProfile.email)
 
   return <DashboardShell profile={finalProfile}>{children}</DashboardShell>
 }
