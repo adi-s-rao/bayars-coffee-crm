@@ -28,6 +28,11 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
+async function signOut() {
+  await fetch('/api/auth/signout', { method: 'POST' })
+  window.location.href = '/login'
+}
+
 const NAV_ITEMS = [
   { label: 'Home', href: '/dashboard', Icon: Home },
   { label: 'Map', href: '/dashboard/map', Icon: MapPin },
@@ -148,11 +153,16 @@ export default function DashboardShell({ profile, children }: Props) {
             <button type="button" className="text-[#A0A0A0] hover:text-white transition-colors">
               <Bell size={18} />
             </button>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15">
+            <button
+              type="button"
+              onClick={signOut}
+              title="Sign out"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15 hover:border-red-500/40 hover:bg-red-500/10 transition-colors"
+            >
               <span className="text-[12px] font-semibold text-[#D97706]">
                 {getInitials(profile.full_name)}
               </span>
-            </div>
+            </button>
           </div>
         </div>
       </header>
