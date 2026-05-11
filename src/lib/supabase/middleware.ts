@@ -7,7 +7,7 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!url || !key) return supabaseResponse
+  if (!url || !key) return { response: supabaseResponse, user: null }
 
   const supabase = createServerClient(url, key, {
     cookies: {

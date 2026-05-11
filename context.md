@@ -114,6 +114,94 @@ pnpm dev
 # 4. Open http://localhost:3000
 ```
 
+## Database Schema
+
+### profiles
+Mirrors `auth.users` (1:1). Created automatically by the `handle_new_user` trigger on signup.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | FK → auth.users |
+| full_name | text | From sign-up form or email prefix |
+| role | text | `'rep'` \| `'manager'`, default `'rep'` |
+| email | text | Copied from auth.users |
+| phone | text | Optional |
+| avatar_url | text | Optional, stored in Supabase Storage |
+| created_at / updated_at | timestamptz | Auto-managed by trigger |
+
+### leads
+Core entity. One lead = one cafe prospect or customer.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| created_by | uuid | FK → profiles |
+| status | text | Pipeline stage enum |
+| cafe_name | text | Display name |
+| latitude / longitude | float8 | GPS for map view |
+| location_address | text | Human-readable address |
+| poc_name / poc_contact | text | Point of contact |
+| coffee_machine | text | Machine in use |
+| current_bean_brand | text | Competitor brand |
+| bean_usage_kg | numeric | Monthly usage |
+| bean_price_per_kg | numeric | What they currently pay |
+| cappuccino_price | numeric | Menu price |
+| menu_image_url | text | Photo from Supabase Storage menus bucket |
+| remarks | text | Free-text notes |
+| demo_date | timestamptz | When demo was/is scheduled |
+| quoted_price / quoted_bean_name | numeric / text | Our offer |
+| calibration_visit_date | timestamptz | Post-demo calibration |
+| visit_notes | text | Notes from calibration |
+| cs_handover_date | timestamptz | When handed to CS team |
+| scheduled_date / scheduled_type | timestamptz / text | Next planned visit |
+
+### checkins
+GPS-verified visit log. Reps check in from the field.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| lead_id | uuid | Optional FK → leads |
+| user_id | uuid | FK → profiles |
+| user_name | text | Denormalized for fast reads |
+| type | text | `visit`, `demo`, `workshop`, `start_day`, `end_day` |
+| latitude / longitude | float8 | Captured GPS |
+| remarks | text | Visit notes |
+| gate_pass_number | text | For buildings with access control |
+| beans_used / bean_brand / bean_amount_kg | bool / text / numeric | Sample tracking |
+| distance_from_previous_km | float8 | Odometer delta |
+
+### Migration file
+`supabase/migrations/001_initial_schema.sql` — run this once in the Supabase SQL editor.
+
+## Auth Flow (detailed)
+
+1. **Sign-up**: User submits full_name + email + password on `/login` (Sign Up tab)
+2. Supabase creates a row in `auth.users`, storing `full_name` in `raw_user_meta_data`
+3. **Trigger** `handle_new_user` fires `AFTER INSERT ON auth.users`, inserts into `public.profiles`
+4. If email confirmation is enabled: user clicks link → confirmed
+5. **Sign-in**: User submits email + password
+6. Supabase issues a JWT, stored as an HTTP-only cookie via `@supabase/ssr`
+7. **Middleware** runs on every request: `updateSession()` refreshes the cookie; checks for user on `/dashboard` routes, redirects to `/login` if missing
+8. **Dashboard**: Server Component calls `createClient()`, fetches profile from `public.profiles`
+9. **Sign-out**: POST to `/api/auth/signout` → `supabase.auth.signOut()` → redirect to `/login`
+
+## RLS Strategy
+
+All three tables have RLS enabled. The pattern is:
+- **Own-row access**: `auth.uid() = owner_column` — reps see only their rows
+- **Manager override**: sub-select `EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'manager')` — managers see everything
+- **WITH CHECK** mirrors USING on write policies to prevent privilege escalation
+
+The `handle_new_user` trigger runs as `SECURITY DEFINER` with `search_path = public` to safely insert into `profiles` even though the trigger fires in the `auth` schema context.
+
+## Storage Bucket: menus
+
+- Bucket name: `menus`, public (images are accessible without auth)
+- Upload path enforced by RLS: `authenticated` users can only write to `{their_uid}/*`
+- Read is open to the public (serves menu photos in the UI)
+- Bucket created by the migration SQL (`INSERT … ON CONFLICT DO NOTHING` for idempotency)
+
 ## Deployment
 
 - **Frontend**: Vercel (connect GitHub repo, set env vars in project settings)

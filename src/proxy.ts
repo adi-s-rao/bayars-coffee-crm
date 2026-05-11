@@ -3,10 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 const PUBLIC_ROUTES = ['/', '/login', '/auth/callback']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Always allow public routes and static assets through
   const isPublic =
     PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/')) ||
     pathname.startsWith('/_next') ||
@@ -16,7 +15,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Refresh session and check auth for protected routes
   const { response, user } = await updateSession(request)
 
   if (pathname.startsWith('/dashboard') && !user) {

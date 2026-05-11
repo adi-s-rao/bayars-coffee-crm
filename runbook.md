@@ -42,6 +42,44 @@ Project scaffolded with Next.js 16 (latest), TypeScript strict, Tailwind v4, sha
 
 ---
 
+## Database & Auth
+
+### 2026-05-11 — Migration 001_initial_schema.sql created
+
+**Action:** Created `supabase/migrations/001_initial_schema.sql` with:
+- Tables: `profiles`, `leads`, `checkins`
+- Triggers: `handle_updated_at` (profiles + leads), `handle_new_user` (auth.users → profiles)
+- RLS policies on all three tables (rep own-row + manager full-access pattern)
+- Storage bucket `menus` (public, upload restricted to own uid path)
+- Indexes on `leads(created_by, status, created_at)` and `checkins(user_id, lead_id, created_at, type)`
+
+**How to run:** Supabase dashboard → SQL Editor → paste file contents → Run
+
+**Files changed:** `supabase/migrations/001_initial_schema.sql`
+
+---
+
+### 2026-05-11 — Auth page shadcn components
+
+**Components used in `src/app/(auth)/login/page.tsx`:**
+- `Tabs / TabsList / TabsTrigger / TabsContent` — Sign In / Sign Up switcher, avoids two separate pages
+- `Button` — full-width submit with `disabled` state during loading
+- `Input` — standard email, password, text fields with `autoComplete` set
+- `Label` — accessible labels linked via `htmlFor`
+- `Loader2` from lucide-react with `animate-spin` — spinner during async auth calls
+
+**Why Tabs instead of two pages:** Single-route auth keeps the URL as `/login` regardless of mode; no redirect flash when switching between sign-in and sign-up.
+
+---
+
+### 2026-05-11 — Email confirmation disabled for development
+
+**Note:** In Supabase dashboard → Authentication → Settings → "Enable email confirmations" should be toggled OFF during development so sign-ups immediately activate without needing to click an email link. Re-enable before production.
+
+**Files changed:** Supabase dashboard setting only (no code change)
+
+---
+
 ## Future entries
 
 Use this format:
