@@ -48,6 +48,7 @@ export default function LoginPage() {
     console.log('Sign in result:', { data, error })
     if (error) { setSiError(error.message); setSiLoading(false); return }
     router.refresh()
+    await new Promise(resolve => setTimeout(resolve, 100))
     router.push('/dashboard')
   }
 
