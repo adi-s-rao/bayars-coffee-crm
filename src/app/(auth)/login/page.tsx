@@ -44,14 +44,21 @@ export default function LoginPage() {
     e.preventDefault()
     setSiLoading(true)
     setSiError('')
-    const { data, error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword })
-    console.log('SIGNIN DATA:', JSON.stringify(data))
-    console.log('SIGNIN ERROR:', JSON.stringify(error))
-    console.log('SIGNIN SESSION:', JSON.stringify(data?.session))
-    if (error) { setSiError(error.message); setSiLoading(false); return }
-    router.refresh()
-    await new Promise(r => setTimeout(r, 150))
-    router.push('/dashboard')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: siEmail,
+      password: siPassword
+    })
+
+    if (error) {
+      setSiError(error.message)
+      setSiLoading(false)
+      return
+    }
+
+    // Do NOT use router.push — use window.location for a hard
+    // navigation that forces the server to re-read cookies
+    window.location.href = '/dashboard'
   }
 
   async function handleSignUp(e: React.FormEvent) {

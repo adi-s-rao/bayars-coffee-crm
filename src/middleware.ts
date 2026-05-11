@@ -1,23 +1,20 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  console.log('MIDDLEWARE RUNNING:', request.nextUrl.pathname)
-
   const { pathname } = request.nextUrl
-
   const { response, user } = await updateSession(request)
 
-  console.log('MIDDLEWARE USER:', user?.id ?? 'null')
-  console.log('MIDDLEWARE PATH:', pathname)
-
+  // Redirect unauthenticated users away from protected routes
   if (pathname.startsWith('/dashboard') && !user) {
-    console.log('MIDDLEWARE REDIRECTING TO LOGIN')
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  console.log('MIDDLEWARE PASSING THROUGH')
+  // Redirect authenticated users away from login
+  if (pathname === '/login' && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
   return response
 }
 
