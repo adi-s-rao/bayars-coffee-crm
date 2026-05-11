@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { Profile } from '@/types'
+import type { Profile, UserRole } from '@/types'
 
 export default async function DashboardLayout({
   children,
@@ -19,17 +19,20 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
-  // If the profiles row is missing (migration not yet applied, or trigger didn't
-  // fire), fall back to basic info from the auth user rather than redirecting to
-  // /login — that would loop an authenticated user back to the login page.
-  const profile: Profile = (data as Profile | null) ?? {
+  const dbProfile = data as Profile | null
+
+  if (!dbProfile) {
+    console.warn('Profile missing for user:', user.id)
+  }
+
+  const profile: Profile = dbProfile ?? {
     id: user.id,
     full_name:
       (user.user_metadata?.full_name as string | undefined) ??
       user.email?.split('@')[0] ??
       'User',
     email: user.email ?? '',
-    role: 'rep',
+    role: 'rep' as UserRole,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
