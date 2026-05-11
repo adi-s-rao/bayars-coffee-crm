@@ -19,8 +19,20 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
-  const profile = data as Profile | null
-  if (!profile) redirect('/login')
+  // If the profiles row is missing (migration not yet applied, or trigger didn't
+  // fire), fall back to basic info from the auth user rather than redirecting to
+  // /login — that would loop an authenticated user back to the login page.
+  const profile: Profile = (data as Profile | null) ?? {
+    id: user.id,
+    full_name:
+      (user.user_metadata?.full_name as string | undefined) ??
+      user.email?.split('@')[0] ??
+      'User',
+    email: user.email ?? '',
+    role: 'rep',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
 
   return <DashboardShell profile={profile}>{children}</DashboardShell>
 }

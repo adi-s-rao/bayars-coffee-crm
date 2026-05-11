@@ -44,8 +44,10 @@ export default function LoginPage() {
     e.preventDefault()
     setSiLoading(true)
     setSiError('')
-    const { error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword })
+    const { data, error } = await supabase.auth.signInWithPassword({ email: siEmail, password: siPassword })
+    console.log('Sign in result:', { data, error })
     if (error) { setSiError(error.message); setSiLoading(false); return }
+    router.refresh()
     router.push('/dashboard')
   }
 
