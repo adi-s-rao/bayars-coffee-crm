@@ -383,6 +383,11 @@ export default function DashboardShell({ profile, children }: Props) {
         >
           {NAV_ITEMS.map(({ label, href, Icon }) => {
             const active = pathname === href
+            const isReports = href === '/dashboard/reports'
+            const isRep = profile.role !== 'manager'
+            const inactiveColor = isReports && isRep
+              ? 'rgba(235,235,245,0.25)'
+              : 'rgba(235,235,245,0.45)'
             return (
               <Link
                 key={href}
@@ -397,12 +402,12 @@ export default function DashboardShell({ profile, children }: Props) {
                 className="flex min-w-[56px] flex-col items-center gap-[3px] py-2 transition-all active:scale-[0.88]"
                 style={{ textDecoration: 'none' }}
               >
-                <Icon size={24} color={active ? '#D97706' : 'rgba(235,235,245,0.45)'} />
+                <Icon size={24} color={active ? '#D97706' : inactiveColor} />
                 <span
                   style={{
                     fontSize: '11px',
                     fontWeight: 400,
-                    color: active ? '#D97706' : 'rgba(235,235,245,0.45)',
+                    color: active ? '#D97706' : inactiveColor,
                   }}
                 >
                   {label}

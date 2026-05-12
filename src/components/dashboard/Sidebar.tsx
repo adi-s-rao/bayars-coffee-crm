@@ -128,6 +128,9 @@ export default function Sidebar({ isOpen, onClose, profile, onSettingsOpen }: Pr
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {NAV_ITEMS.map(({ label, href, Icon }) => {
               const active = pathname === href
+              const isReports = href === '/dashboard/reports'
+              const dimmed = isReports && !isManager
+              const inactiveColor = dimmed ? 'rgba(235,235,245,0.25)' : 'rgba(235,235,245,0.5)'
               return (
                 <Link
                   key={href}
@@ -141,10 +144,10 @@ export default function Sidebar({ isOpen, onClose, profile, onSettingsOpen }: Pr
                     fontWeight: 500,
                     textDecoration: 'none',
                     background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
-                    color: active ? '#FFF' : 'rgba(235,235,245,0.5)',
+                    color: active ? '#FFF' : inactiveColor,
                   }}
                 >
-                  <Icon size={22} color={active ? '#D97706' : undefined} />
+                  <Icon size={22} color={active ? '#D97706' : dimmed ? 'rgba(235,235,245,0.25)' : undefined} />
                   {label}
                 </Link>
               )
