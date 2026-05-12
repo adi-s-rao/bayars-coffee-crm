@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   BarChart2,
@@ -55,6 +55,8 @@ const NAV_ITEMS = [
 
 export default function DashboardShell({ profile, children }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const [dayState, setDayState] = useState<DayState | null>(null)
   const [dayLoading, setDayLoading] = useState(false)
@@ -172,7 +174,11 @@ export default function DashboardShell({ profile, children }: Props) {
   return (
     <div className="flex min-h-screen flex-col bg-[#0A0A0A]">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-30 border-b border-[#1E1E1E] bg-[#141414] px-4 py-3.5">
+      <header className="relative sticky top-0 z-30 border-b border-[#1E1E1E] bg-[#141414] px-4 py-3.5">
+        {/* Page transition loading bar */}
+        {isPending && (
+          <div className="absolute left-0 right-0 top-0 z-50 h-[2px] bg-[#D97706]" />
+        )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <button
@@ -307,6 +313,13 @@ export default function DashboardShell({ profile, children }: Props) {
               <Link
                 key={href}
                 href={href}
+                prefetch={true}
+                onClick={(e) => {
+                  if (!active) {
+                    e.preventDefault()
+                    startTransition(() => router.push(href))
+                  }
+                }}
                 className="flex flex-col items-center gap-1 transition-colors"
               >
                 <Icon size={20} color={active ? '#D97706' : '#555'} />

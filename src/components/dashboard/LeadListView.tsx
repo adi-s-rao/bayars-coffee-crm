@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Coffee, Phone, Plus, Search, User } from 'lucide-react'
-import { formatDistanceToNow, isToday } from 'date-fns'
+import { formatDistanceToNow, isToday, parseISO } from 'date-fns'
 import { toast } from 'sonner'
+import useSWR from 'swr'
 import type { Lead, LeadStatus, Profile } from '@/types'
 import CheckInModal from './CheckInModal'
 import LeadDetailsDrawer from './LeadDetailsDrawer'
@@ -11,7 +12,6 @@ import NewLeadModal from './NewLeadModal'
 import ScheduleModal from './ScheduleModal'
 
 interface Props {
-  leads: Lead[]
   profile: Profile
 }
 
@@ -33,13 +33,21 @@ const FILTER_PILLS: { label: string; value: LeadStatus | 'all' }[] = [
 ]
 
 function lastVisitLabel(updatedAt: string): string {
-  const d = new Date(updatedAt)
-  if (isToday(d)) return 'Last visit: Today'
-  return `Last visit: ${formatDistanceToNow(d, { addSuffix: false })} ago`
+  const d = parseISO(updatedAt)
+  if (isToday(d)) return 'Updated today'
+  return `Updated ${formatDistanceToNow(d, { addSuffix: true })}`
 }
 
-export default function LeadListView({ leads: initialLeads, profile }: Props) {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads)
+const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+export default function LeadListView({ profile }: Props) {
+  const { data, isLoading, mutate } = useSWR<{ leads: Lead[] }>(
+    '/api/leads',
+    fetcher,
+    { refreshInterval: 0, revalidateOnFocus: false }
+  )
+  const leads = data?.leads ?? []
+
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -51,20 +59,33 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   const [totalKm, setTotalKm] = useState(0)
   const [checkinRefreshKey, setCheckinRefreshKey] = useState(0)
 
-  useEffect(() => {
-    fetch('/api/checkins/today')
-      .then(r => r.json())
-      .then(data => {
-        setCheckInCount(data?.checkInCount ?? 0)
-        setTotalKm(data?.totalKm ?? 0)
-      })
-      .catch(() => {
-        setCheckInCount(0)
-        setTotalKm(0)
-      })
+  const fetchTodayStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/checkins/today')
+      const d = await res.json() as { checkInCount?: number; totalKm?: number }
+      setCheckInCount(d?.checkInCount ?? 0)
+      setTotalKm(d?.totalKm ?? 0)
+    } catch {
+      setCheckInCount(0)
+      setTotalKm(0)
+    }
   }, [])
 
-  const leadsToday = leads.filter(l => isToday(new Date(l.created_at))).length
+  useEffect(() => { void fetchTodayStats() }, [fetchTodayStats])
+
+  useEffect(() => {
+    const refresh = () => { void fetchTodayStats() }
+    window.addEventListener('checkin-completed', refresh)
+    return () => window.removeEventListener('checkin-completed', refresh)
+  }, [fetchTodayStats])
+
+  useEffect(() => {
+    const refresh = () => { void mutate() }
+    window.addEventListener('lead-created', refresh)
+    return () => window.removeEventListener('lead-created', refresh)
+  }, [mutate])
+
+  const leadsToday = leads.filter(l => isToday(parseISO(l.created_at))).length
 
   const filtered = leads.filter(l => {
     const matchSearch = l.cafe_name.toLowerCase().includes(search.toLowerCase())
@@ -87,14 +108,16 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
     setIsScheduleOpen(true)
   }
 
-  function handleLeadScheduled(updated: Lead) {
-    setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
+  function handleLeadUpdate(updated: Lead) {
     setSelectedLead(updated)
+    void mutate(
+      d => d ? { leads: d.leads.map(l => l.id === updated.id ? updated : l) } : d,
+      { revalidate: false }
+    )
   }
 
-  function handleLeadUpdate(updated: Lead) {
-    setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
-    setSelectedLead(updated)
+  function handleLeadScheduled(updated: Lead) {
+    handleLeadUpdate(updated)
   }
 
   function handleCheckInSuccess(updated: Lead) {
@@ -103,15 +126,21 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   }
 
   function handleLeadDelete(leadId: string) {
-    setLeads(prev => prev.filter(l => l.id !== leadId))
     setIsDrawerOpen(false)
     setSelectedLead(null)
+    void mutate(
+      d => d ? { leads: d.leads.filter(l => l.id !== leadId) } : d,
+      { revalidate: false }
+    )
   }
 
   function handleLeadCreated(newLead: Lead) {
-    setLeads(prev => [newLead, ...prev])
     setIsNewLeadOpen(false)
     toast.success('Lead added!')
+    void mutate(
+      d => d ? { leads: [newLead, ...d.leads] } : { leads: [newLead] },
+      { revalidate: false }
+    )
   }
 
   return (
@@ -119,15 +148,15 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2.5 px-4 py-3.5">
         {[
-          { value: String(leadsToday ?? 0),              label: 'Leads Today' },
-          { value: String(checkInCount ?? 0),            label: 'Check-ins' },
-          { value: (totalKm ?? 0).toFixed(1),            label: 'KM Today' },
+          { value: String(leadsToday),       label: 'Leads Today' },
+          { value: String(checkInCount),      label: 'Check-ins' },
+          { value: totalKm.toFixed(1),        label: 'KM Today' },
         ].map(({ value, label }) => (
           <div
             key={label}
             className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-3"
           >
-            <p className="text-[22px] font-bold leading-tight tracking-tight text-[#D97706]">
+            <p className="text-[20px] font-bold leading-tight tracking-tight text-[#D97706]">
               {value}
             </p>
             <p className="mt-0.5 text-[11px] font-medium text-[#7A7A7A]">{label}</p>
@@ -143,7 +172,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
         />
         <input
           type="text"
-          placeholder="Search leads…"
+          placeholder="Search cafes…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] py-2.5 pl-8 pr-3 text-[13px] text-white outline-none placeholder:text-[#555] focus:border-[#D97706] transition-colors"
@@ -170,7 +199,16 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
 
       {/* Lead cards */}
       <div className="flex flex-col gap-2.5 px-4">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col gap-2.5">
+            {[1, 2, 3].map(i => (
+              <div
+                key={i}
+                className="h-[110px] animate-pulse rounded-xl border border-[#2A2A2A] bg-[#1A1A1A]"
+              />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <Coffee size={40} className="text-[#2A2A2A]" />
             <p className="mt-3 text-[15px] font-medium text-[#555]">No leads found</p>
@@ -198,7 +236,8 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
                       {lead.cafe_name}
                     </p>
                     {lead.location_address && (
-                      <p className="mt-0.5 truncate text-[12px] text-[#555]">
+                      <p className="mt-0.5 overflow-hidden text-[12px] text-[#555]"
+                         style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {lead.location_address}
                       </p>
                     )}

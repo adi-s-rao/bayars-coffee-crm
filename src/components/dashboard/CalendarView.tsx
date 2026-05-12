@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import NewScheduleModal from './NewScheduleModal'
+import CheckInModal from './CheckInModal'
 import {
   addMonths,
   subMonths,
@@ -13,7 +14,7 @@ import {
   isSameDay,
   isToday,
 } from 'date-fns'
-import type { Lead, LeadStatus } from '@/types'
+import type { Lead, LeadStatus, Profile } from '@/types'
 import LeadDetailsDrawer from './LeadDetailsDrawer'
 
 const STATUS_COLOR: Record<LeadStatus, string> = {
@@ -40,13 +41,18 @@ const SCHEDULED_TYPE_LABEL: Record<string, string> = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-export default function CalendarView() {
+interface Props {
+  profile: Profile
+}
+
+export default function CalendarView({ profile }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [localLeads, setLocalLeads] = useState<Lead[]>([])
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isNewScheduleOpen, setIsNewScheduleOpen] = useState(false)
+  const [checkInLead, setCheckInLead] = useState<Lead | null>(null)
 
   const fetchScheduled = useCallback(async () => {
     try {
@@ -92,6 +98,11 @@ export default function CalendarView() {
     setLocalLeads(prev => prev.filter(l => l.id !== leadId))
     setDrawerLead(null)
     setIsDrawerOpen(false)
+  }
+
+  function handleCheckInSuccess(updated: Lead) {
+    setLocalLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
+    setCheckInLead(null)
   }
 
   return (
@@ -199,20 +210,22 @@ export default function CalendarView() {
         ) : (
           <div className="flex flex-col gap-2">
             {selectedDayLeads.map(lead => (
-              <button
+              <div
                 key={lead.id}
-                type="button"
-                onClick={() => {
-                  setDrawerLead(lead)
-                  setIsDrawerOpen(true)
-                }}
-                className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] px-3.5 py-3 text-left transition-colors hover:border-[#3A3A3A]"
+                className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] px-3.5 py-3"
               >
                 <span
                   className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
                   style={{ backgroundColor: STATUS_COLOR[lead.status] }}
                 />
-                <div className="min-w-0 flex-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrawerLead(lead)
+                    setIsDrawerOpen(true)
+                  }}
+                  className="min-w-0 flex-1 text-left"
+                >
                   <p className="truncate text-[13px] font-semibold text-white">
                     {lead.cafe_name}
                   </p>
@@ -222,7 +235,7 @@ export default function CalendarView() {
                     {lead.scheduled_type &&
                       ` · ${SCHEDULED_TYPE_LABEL[lead.scheduled_type] ?? lead.scheduled_type}`}
                   </p>
-                </div>
+                </button>
                 <span
                   className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
                   style={{
@@ -232,7 +245,14 @@ export default function CalendarView() {
                 >
                   {STATUS_LABEL[lead.status]}
                 </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setCheckInLead(lead)}
+                  className="flex-shrink-0 rounded-md bg-[#D97706] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#B45309] transition-colors"
+                >
+                  Check In
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -265,6 +285,16 @@ export default function CalendarView() {
           void fetchScheduled()
         }}
       />
+
+      {checkInLead && (
+        <CheckInModal
+          lead={checkInLead}
+          isOpen={!!checkInLead}
+          onClose={() => setCheckInLead(null)}
+          onCheckedIn={handleCheckInSuccess}
+          profile={profile}
+        />
+      )}
     </div>
   )
 }

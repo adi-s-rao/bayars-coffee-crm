@@ -51,6 +51,12 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
   const [error, setError] = useState('')
 
   useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (isOpen) document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
+
+  useEffect(() => {
     if (!isOpen) return
     setDate(format(selectedDate ?? new Date(), 'yyyy-MM-dd'))
     setLeadsLoading(true)

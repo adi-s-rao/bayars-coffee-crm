@@ -57,6 +57,12 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     if (lead) setLocalLead(lead)
   }, [lead])
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (isOpen) document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
+
   // Measure tab underline
   useEffect(() => {
     const refs: Record<DrawerTab, React.RefObject<HTMLButtonElement | null>> = {

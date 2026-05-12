@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, Loader2, MapPin, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CheckInType, Lead, LeadStatus, Profile } from '@/types'
@@ -50,6 +50,12 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
   const [beanBrand, setBeanBrand] = useState('')
   const [beanAmount, setBeanAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (isOpen) document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -118,6 +124,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
       if (!res.ok) throw new Error('Failed')
       const json = await res.json() as { success: boolean; lead: Lead | null }
       toast.success('Check-in recorded!')
+      window.dispatchEvent(new Event('checkin-completed'))
       if (json.lead) onCheckedIn?.(json.lead)
       onClose()
     } catch {

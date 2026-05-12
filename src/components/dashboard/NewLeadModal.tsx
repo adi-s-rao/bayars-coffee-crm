@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2, MapPin, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Lead, LeadStatus, Profile } from '@/types'
@@ -33,6 +33,12 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
   const [pocError, setPocError] = useState('')
   const [remarks, setRemarks] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (isOpen) document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -102,6 +108,7 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
       })
       if (!res.ok) throw new Error('Failed')
       const { lead } = await res.json() as { lead: Lead }
+      window.dispatchEvent(new Event('lead-created'))
       onCreated(lead)
       // Reset form
       setCafeName(''); setStatus('cold_lead'); setLocation(null); setAddress('')

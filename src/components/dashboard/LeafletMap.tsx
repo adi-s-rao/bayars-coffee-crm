@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Lead, LeadStatus } from '@/types'
@@ -23,12 +23,21 @@ function makeIcon(color: string): L.DivIcon {
   })
 }
 
+function FlyToController({ flyTo }: { flyTo?: [number, number] }) {
+  const map = useMap()
+  useEffect(() => {
+    if (flyTo) map.flyTo(flyTo, 15)
+  }, [flyTo, map])
+  return null
+}
+
 interface Props {
   leads: Lead[]
   onMarkerClick: (lead: Lead) => void
+  flyTo?: [number, number]
 }
 
-export default function LeafletMap({ leads, onMarkerClick }: Props) {
+export default function LeafletMap({ leads, onMarkerClick, flyTo }: Props) {
 
   const mappedLeads = useMemo(
     () => leads.filter(l => l.latitude != null && l.longitude != null),
@@ -47,6 +56,7 @@ export default function LeafletMap({ leads, onMarkerClick }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         maxZoom={19}
       />
+      <FlyToController flyTo={flyTo} />
       {mappedLeads.map(lead => (
         <Marker
           key={lead.id}
