@@ -16,11 +16,11 @@ interface Props {
 }
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string; dot: string }> = {
-  cold_lead:      { label: 'Cold Lead', color: '#3B82F6', bg: 'rgba(59,130,246,0.12)',  dot: '#3B82F6' },
-  hot_lead:       { label: 'Hot Lead',  color: '#F97316', bg: 'rgba(249,115,22,0.12)',  dot: '#F97316' },
-  demo_scheduled: { label: 'Demo',      color: '#D97706', bg: 'rgba(217,119,6,0.12)',   dot: '#D97706' },
-  customer:       { label: 'Customer',  color: '#22C55E', bg: 'rgba(34,197,94,0.12)',   dot: '#22C55E' },
-  competitor:     { label: 'Competitor',color: '#EF4444', bg: 'rgba(239,68,68,0.12)',   dot: '#EF4444' },
+  cold_lead:      { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)',  dot: '#0A84FF' },
+  hot_lead:       { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)',  dot: '#FF9F0A' },
+  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.15)',   dot: '#D97706' },
+  customer:       { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)',   dot: '#30D158' },
+  competitor:     { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)',   dot: '#FF453A' },
 }
 
 const FILTER_PILLS: { label: string; value: LeadStatus | 'all' }[] = [
@@ -144,22 +144,22 @@ export default function LeadListView({ profile }: Props) {
   }
 
   return (
-    <div className="bg-[#0A0A0A] pb-24">
+    <div className="bg-black pb-[108px]">
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2.5 px-4 py-3.5">
+      <div className="grid grid-cols-3 gap-3 px-4 py-4">
         {[
-          { value: String(leadsToday),       label: 'Leads Today' },
-          { value: String(checkInCount),      label: 'Check-ins' },
-          { value: totalKm.toFixed(1),        label: 'KM Today' },
+          { value: String(leadsToday),  label: 'Leads Today' },
+          { value: String(checkInCount), label: 'Check-ins' },
+          { value: totalKm.toFixed(1),  label: 'KM Today' },
         ].map(({ value, label }) => (
           <div
             key={label}
-            className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-3"
+            className="rounded-2xl bg-[#1C1C1E] p-3.5"
           >
-            <p className="text-[20px] font-bold leading-tight tracking-tight text-[#D97706]">
+            <p className="text-[28px] font-bold leading-none tracking-tight text-[#D97706]">
               {value}
             </p>
-            <p className="mt-0.5 text-[11px] font-medium text-[#7A7A7A]">{label}</p>
+            <p className="mt-1.5 text-[12px] font-medium text-[#8E8E93]">{label}</p>
           </div>
         ))}
       </div>
@@ -168,28 +168,28 @@ export default function LeadListView({ profile }: Props) {
       <div className="relative px-4 pb-3">
         <Search
           size={15}
-          className="pointer-events-none absolute left-7 top-1/2 -translate-y-1/2 text-[#555]"
+          className="pointer-events-none absolute left-7 top-1/2 -translate-y-1/2 text-[#636366]"
         />
         <input
           type="text"
           placeholder="Search cafes…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] py-2.5 pl-8 pr-3 text-[13px] text-white outline-none placeholder:text-[#555] focus:border-[#D97706] transition-colors"
+          className="w-full rounded-xl bg-[#1C1C1E] py-3 pl-8 pr-3 text-[15px] text-white outline-none placeholder:text-[#636366] transition-colors"
         />
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-2 overflow-x-auto px-4 pb-3 [&::-webkit-scrollbar]:hidden">
         {FILTER_PILLS.map(({ label, value }) => (
           <button
             key={value}
             type="button"
             onClick={() => setStatusFilter(value)}
-            className={`flex-shrink-0 rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
+            className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all active:scale-[0.94] ${
               statusFilter === value
                 ? 'bg-[#D97706] text-white'
-                : 'border border-[#2A2A2A] bg-[#1A1A1A] text-[#7A7A7A] hover:text-[#A0A0A0]'
+                : 'bg-[#1C1C1E] text-[#8E8E93] hover:text-white'
             }`}
           >
             {label}
@@ -198,21 +198,21 @@ export default function LeadListView({ profile }: Props) {
       </div>
 
       {/* Lead cards */}
-      <div className="flex flex-col gap-2.5 px-4">
+      <div className="flex flex-col gap-3 px-4">
         {isLoading ? (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
               <div
                 key={i}
-                className="h-[110px] animate-pulse rounded-xl border border-[#2A2A2A] bg-[#1A1A1A]"
+                className="h-[120px] animate-pulse rounded-2xl bg-[#1C1C1E]"
               />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
-            <Coffee size={40} className="text-[#2A2A2A]" />
-            <p className="mt-3 text-[15px] font-medium text-[#555]">No leads found</p>
-            <p className="mt-1 text-[13px] text-[#444]">Add your first lead to get started</p>
+            <Coffee size={40} className="text-[#2C2C2E]" />
+            <p className="mt-3 text-[15px] font-medium text-[#636366]">No leads found</p>
+            <p className="mt-1 text-[13px] text-[#48484A]">Add your first lead to get started</p>
           </div>
         ) : (
           filtered.map(lead => {
@@ -220,30 +220,30 @@ export default function LeadListView({ profile }: Props) {
             return (
               <div
                 key={lead.id}
-                className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-3.5"
+                className="rounded-2xl border border-white/[0.06] bg-[#1C1C1E] p-4"
               >
                 {/* Top row */}
                 <div
-                  className="flex cursor-pointer items-start gap-2"
+                  className="flex cursor-pointer items-start gap-2.5"
                   onClick={() => openDrawer(lead)}
                 >
                   <span
-                    className="mt-1 h-2 w-2 flex-shrink-0 rounded-full"
+                    className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: meta.dot }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-semibold leading-tight text-white">
+                    <p className="text-[17px] font-semibold leading-tight text-white">
                       {lead.cafe_name}
                     </p>
                     {lead.location_address && (
-                      <p className="mt-0.5 overflow-hidden text-[12px] text-[#555]"
+                      <p className="mt-0.5 overflow-hidden text-[13px] text-[#8E8E93]"
                          style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {lead.location_address}
                       </p>
                     )}
                   </div>
                   <span
-                    className="flex-shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
+                    className="flex-shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold"
                     style={{ backgroundColor: meta.bg, color: meta.color }}
                   >
                     {meta.label}
@@ -252,40 +252,40 @@ export default function LeadListView({ profile }: Props) {
 
                 {/* Middle row */}
                 <div
-                  className="my-2 flex cursor-pointer items-center gap-2 text-[12px] text-[#7A7A7A]"
+                  className="my-2.5 flex cursor-pointer items-center gap-2 text-[13px] text-[#8E8E93]"
                   onClick={() => openDrawer(lead)}
                 >
-                  <User size={13} className="text-[#555]" />
+                  <User size={13} className="text-[#636366]" />
                   <span>{lead.poc_name || '—'}</span>
-                  <span className="text-[#333]">•</span>
-                  <Phone size={13} className="text-[#555]" />
+                  <span className="text-[#3A3A3C]">•</span>
+                  <Phone size={13} className="text-[#636366]" />
                   <span>{lead.poc_contact || '—'}</span>
                 </div>
 
                 {/* Bottom row */}
-                <div className="flex items-center justify-between border-t border-[#222] pt-2.5">
-                  <span className="rounded-md border border-[#222] bg-[#161616] px-2 py-1 text-[11px] text-[#444]">
+                <div className="flex items-center justify-between border-t border-white/[0.06] pt-2.5">
+                  <span className="rounded-lg bg-black/40 px-2 py-1 text-[11px] text-[#636366]">
                     {lastVisitLabel(lead.updated_at)}
                   </span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => openCheckIn(lead)}
-                      className="rounded-md bg-[#D97706] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#B45309] transition-colors"
+                      className="rounded-lg bg-[#D97706] px-3 py-1.5 text-[12px] font-semibold text-white transition-all active:scale-[0.94] hover:bg-[#B45309]"
                     >
                       Check In
                     </button>
                     <button
                       type="button"
                       onClick={() => openSchedule(lead)}
-                      className="rounded-md border border-[#2A2A2A] px-2.5 py-1 text-[11px] font-medium text-[#A0A0A0] hover:text-white transition-colors"
+                      className="rounded-lg border border-white/[0.08] px-3 py-1.5 text-[12px] font-medium text-[#8E8E93] transition-all hover:text-white"
                     >
                       Schedule
                     </button>
                     <button
                       type="button"
                       onClick={() => openDrawer(lead)}
-                      className="rounded-md px-2 py-1 text-[11px] font-medium text-[#7A7A7A] hover:text-white transition-colors"
+                      className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[#636366] transition-all hover:text-white"
                     >
                       Edit
                     </button>
@@ -301,7 +301,7 @@ export default function LeadListView({ profile }: Props) {
       <button
         type="button"
         onClick={() => setIsNewLeadOpen(true)}
-        className="fixed bottom-24 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#D97706] shadow-lg hover:bg-[#B45309] transition-colors"
+        className="fixed bottom-[88px] right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
         aria-label="New lead"
       >
         <Plus size={22} className="text-white" />

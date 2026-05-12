@@ -20,7 +20,7 @@ const VISIT_TYPES: { value: CheckInType; label: string }[] = [
 ]
 
 const inputClass =
-  'w-full rounded-lg border border-[#2A2A2A] bg-[#111] px-3 py-2.5 text-sm text-white outline-none focus:border-[#D97706] focus:ring-1 focus:ring-amber-600/20 transition-colors'
+  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
 
 export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Props) {
   const [visitType, setVisitType] = useState<CheckInType>('visit')
@@ -76,36 +76,39 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative z-10 w-full rounded-t-2xl bg-[#1A1A1A] p-6 md:mx-4 md:max-w-md md:rounded-2xl">
+      <div className="relative z-10 w-full rounded-t-3xl bg-[#1C1C1E] p-6 md:mx-4 md:max-w-md md:rounded-3xl">
+        {/* Drag handle — mobile only */}
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+
         {/* Header */}
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-5 flex items-start justify-between">
           <div>
-            <h2 className="text-[16px] font-semibold text-white">Schedule Visit</h2>
-            <p className="mt-0.5 text-[13px] text-[#7A7A7A]">{lead.cafe_name}</p>
+            <h2 className="text-[20px] font-semibold text-white">Schedule Visit</h2>
+            <p className="mt-0.5 text-[14px] text-[#8E8E93]">{lead.cafe_name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#2A2A2A] p-1.5 text-[#7A7A7A] hover:text-white transition-colors"
+            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Visit type selector */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-5 flex gap-2">
           {VISIT_TYPES.map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => setVisitType(value)}
-              className={`flex-1 rounded-lg py-2 text-[13px] font-medium capitalize transition-colors ${
+              className={`flex-1 rounded-xl py-2.5 text-[14px] font-medium capitalize transition-all active:scale-[0.96] ${
                 visitType === value
                   ? 'bg-[#D97706] text-white'
-                  : 'border border-[#2A2A2A] bg-[#111] text-[#7A7A7A] hover:text-white'
+                  : 'bg-white/[0.07] text-[#8E8E93]'
               }`}
             >
               {label}
@@ -115,7 +118,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
 
         {/* Date */}
         <div className="mb-3">
-          <p className="mb-1.5 text-[12px] font-medium text-[#A0A0A0]">Date *</p>
+          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Date *</p>
           <input
             type="date"
             value={date}
@@ -128,7 +131,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
 
         {/* Time */}
         <div className="mb-3">
-          <p className="mb-1.5 text-[12px] font-medium text-[#A0A0A0]">Time</p>
+          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Time</p>
           <input
             type="time"
             value={time}
@@ -139,11 +142,11 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
         </div>
 
         {/* Notes */}
-        <div className="mb-4">
-          <p className="mb-1.5 text-[12px] font-medium text-[#A0A0A0]">Notes</p>
+        <div className="mb-5">
+          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Notes</p>
           <textarea
             rows={2}
-            placeholder="Add notes..."
+            placeholder="Add notes…"
             value={notes}
             onChange={e => setNotes(e.target.value)}
             className={`${inputClass} resize-none`}
@@ -151,16 +154,16 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
         </div>
 
         {error && (
-          <p className="mb-3 text-[13px] text-red-400">{error}</p>
+          <p className="mb-3 text-[13px] text-[#FF453A]">{error}</p>
         )}
 
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!date || submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#D97706] py-2.5 text-sm font-semibold text-white hover:bg-[#B45309] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting && <Loader2 size={16} className="animate-spin" />}
+          {submitting && <Loader2 size={18} className="animate-spin" />}
           {submitting ? 'Scheduling…' : 'Confirm Schedule'}
         </button>
       </div>

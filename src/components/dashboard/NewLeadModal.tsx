@@ -22,6 +22,10 @@ const STATUSES: { value: LeadStatus; label: string }[] = [
 
 const POC_REGEX = /^\+?[0-9]{10,15}$/
 
+const inputClass =
+  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
+const labelClass = 'mb-1.5 block text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]'
+
 export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
   const [cafeName, setCafeName] = useState('')
   const [status, setStatus] = useState<LeadStatus>('cold_lead')
@@ -55,7 +59,6 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
       const lng = pos.coords.longitude
       setLocation({ lat, lng })
 
-      // Reverse geocode via server proxy
       try {
         const res = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`)
         if (res.ok) {
@@ -122,30 +125,29 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
 
   const canSubmit = cafeName.trim().length > 0 && location !== null && !pocError
 
-  const inputClass =
-    'w-full rounded-lg border border-[#2A2A2A] bg-[#111] px-3 py-2.5 text-sm text-white outline-none placeholder:text-[#555] focus:border-[#D97706] focus:ring-1 focus:ring-amber-600/20 transition-colors'
-  const labelClass = 'mb-1.5 block text-[12px] font-medium text-[#A0A0A0]'
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-[#1A1A1A] p-6 md:mx-4 md:max-w-md md:rounded-2xl">
+      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-[#1C1C1E] p-6 md:mx-4 md:max-w-md md:rounded-3xl">
+        {/* Drag handle — mobile only */}
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+
         {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[16px] font-semibold text-white">New Lead</h2>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-[20px] font-semibold text-white">New Lead</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[#2A2A2A] p-1.5 text-[#7A7A7A] hover:text-white transition-colors"
+            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
           >
             <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Cafe Name */}
           <div>
             <label className={labelClass}>Cafe Name *</label>
@@ -177,16 +179,16 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
           <div>
             <label className={labelClass}>Location *</label>
             {location ? (
-              <div className="mb-2 flex items-center gap-2 rounded-lg border border-[#22C55E]/30 bg-[#22C55E]/10 px-3 py-2">
-                <MapPin size={13} className="text-[#22C55E]" />
-                <span className="text-[12px] text-[#22C55E]">GPS captured</span>
+              <div className="mb-3 flex items-center gap-2 rounded-xl bg-[#30D158]/10 px-3.5 py-3">
+                <MapPin size={13} className="text-[#30D158]" />
+                <span className="text-[13px] text-[#30D158]">GPS captured</span>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={captureLocation}
                 disabled={gpsLoading}
-                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#2A2A2A] py-2.5 text-[13px] text-[#A0A0A0] hover:border-[#D97706] hover:text-[#D97706] disabled:opacity-50 transition-colors"
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white/[0.07] py-3 text-[14px] text-[#8E8E93] transition-all active:scale-[0.98] hover:text-white disabled:opacity-50"
               >
                 {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
                 {gpsLoading ? 'Getting location…' : 'Capture Location'}
@@ -224,9 +226,9 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
               value={pocContact}
               onChange={e => { setPocContact(e.target.value); setPocError('') }}
               onBlur={handleContactBlur}
-              className={`${inputClass} ${pocError ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${pocError ? 'ring-1 ring-[#FF453A]' : ''}`}
             />
-            {pocError && <p className="mt-1 text-[11px] text-red-400">{pocError}</p>}
+            {pocError && <p className="mt-1.5 text-[12px] text-[#FF453A]">{pocError}</p>}
           </div>
 
           {/* Remarks */}
@@ -244,9 +246,9 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
           <button
             type="submit"
             disabled={!canSubmit || submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#D97706] py-2.5 text-sm font-semibold text-white hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting && <Loader2 size={16} className="animate-spin" />}
+            {submitting && <Loader2 size={18} className="animate-spin" />}
             {submitting ? 'Adding…' : 'Add Lead'}
           </button>
         </form>

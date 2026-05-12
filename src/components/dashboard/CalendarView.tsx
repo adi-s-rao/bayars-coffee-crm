@@ -18,11 +18,11 @@ import type { Lead, LeadStatus, Profile } from '@/types'
 import LeadDetailsDrawer from './LeadDetailsDrawer'
 
 const STATUS_COLOR: Record<LeadStatus, string> = {
-  cold_lead:      '#3B82F6',
-  hot_lead:       '#F97316',
+  cold_lead:      '#0A84FF',
+  hot_lead:       '#FF9F0A',
   demo_scheduled: '#D97706',
-  customer:       '#22C55E',
-  competitor:     '#EF4444',
+  customer:       '#30D158',
+  competitor:     '#FF453A',
 }
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -106,42 +106,42 @@ export default function CalendarView({ profile }: Props) {
   }
 
   return (
-    <div className="bg-[#0A0A0A] pb-24">
+    <div className="bg-black pb-[108px]">
       {/* Month header */}
-      <div className="flex items-center justify-between px-4 py-3.5">
+      <div className="flex items-center justify-between px-4 py-4">
         <button
           type="button"
           onClick={() => setCurrentMonth(m => subMonths(m, 1))}
-          className="rounded-lg border border-[#2A2A2A] p-2 text-[#A0A0A0] hover:text-white transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.07] text-[#8E8E93] transition-all active:scale-[0.92] hover:text-white"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={18} />
         </button>
-        <span className="text-[16px] font-semibold text-white">
+        <span className="text-[17px] font-semibold text-white">
           {format(currentMonth, 'MMMM yyyy')}
         </span>
         <button
           type="button"
           onClick={() => setCurrentMonth(m => addMonths(m, 1))}
-          className="rounded-lg border border-[#2A2A2A] p-2 text-[#A0A0A0] hover:text-white transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.07] text-[#8E8E93] transition-all active:scale-[0.92] hover:text-white"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </button>
       </div>
 
       {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 px-2 pb-1">
+      <div className="grid grid-cols-7 px-3 pb-1">
         {DAYS.map(d => (
-          <div key={d} className="py-1.5 text-center text-[11px] font-medium text-[#555]">
+          <div key={d} className="py-1.5 text-center text-[12px] font-medium text-[#636366]">
             {d}
           </div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 px-2">
+      <div className="grid grid-cols-7 px-3">
         {cells.map((day, idx) => {
           if (day === null) {
-            return <div key={`empty-${idx}`} className="aspect-square" />
+            return <div key={`empty-${idx}`} className="min-h-[44px]" />
           }
 
           const date = new Date(
@@ -158,21 +158,21 @@ export default function CalendarView({ profile }: Props) {
               key={day}
               type="button"
               onClick={() => setSelectedDate(date)}
-              className={`relative flex flex-col items-center rounded-lg py-1.5 transition-colors ${
+              className={`relative flex min-h-[44px] flex-col items-center justify-start rounded-xl pt-2 pb-1 transition-all active:scale-[0.92] ${
                 isSelected
-                  ? 'bg-[#D97706]/20'
+                  ? 'bg-[#D97706]/15'
                   : todayCell
-                  ? 'bg-[#2A2A2A]'
-                  : 'hover:bg-[#1A1A1A]'
+                  ? 'bg-white/[0.07]'
+                  : 'hover:bg-white/[0.04]'
               }`}
             >
               <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-[14px] font-medium ${
                   todayCell
                     ? 'bg-[#D97706] text-white'
                     : isSelected
                     ? 'text-[#D97706]'
-                    : 'text-[#A0A0A0]'
+                    : 'text-[#8E8E93]'
                 }`}
               >
                 {day}
@@ -194,25 +194,25 @@ export default function CalendarView({ profile }: Props) {
       </div>
 
       {/* Selected day schedule list */}
-      <div className="mt-4 px-4">
-        <p className="mb-3 text-[12px] font-medium text-[#7A7A7A]">
+      <div className="mt-5 px-4">
+        <p className="mb-3 text-[13px] font-medium text-[#8E8E93]">
           {format(selectedDate, 'EEEE, MMMM d')}
           {' · '}
-          <span className="text-[#A0A0A0]">
+          <span className="text-[#636366]">
             {selectedDayLeads.length} scheduled
           </span>
         </p>
 
         {selectedDayLeads.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-[#444]">
+          <p className="py-8 text-center text-[14px] text-[#48484A]">
             No visits scheduled
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {selectedDayLeads.map(lead => (
               <div
                 key={lead.id}
-                className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] px-3.5 py-3"
+                className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#1C1C1E] px-4 py-3.5"
               >
                 <span
                   className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
@@ -226,10 +226,10 @@ export default function CalendarView({ profile }: Props) {
                   }}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <p className="truncate text-[13px] font-semibold text-white">
+                  <p className="truncate text-[15px] font-semibold text-white">
                     {lead.cafe_name}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-[#7A7A7A]">
+                  <p className="mt-0.5 text-[12px] text-[#8E8E93]">
                     {lead.scheduled_date &&
                       format(new Date(lead.scheduled_date), 'h:mm a')}
                     {lead.scheduled_type &&
@@ -237,7 +237,7 @@ export default function CalendarView({ profile }: Props) {
                   </p>
                 </button>
                 <span
-                  className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                  className="flex-shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-semibold"
                   style={{
                     backgroundColor: `${STATUS_COLOR[lead.status]}20`,
                     color: STATUS_COLOR[lead.status],
@@ -248,7 +248,7 @@ export default function CalendarView({ profile }: Props) {
                 <button
                   type="button"
                   onClick={() => setCheckInLead(lead)}
-                  className="flex-shrink-0 rounded-md bg-[#D97706] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#B45309] transition-colors"
+                  className="flex-shrink-0 rounded-lg bg-[#D97706] px-3 py-1.5 text-[12px] font-semibold text-white transition-all active:scale-[0.94] hover:bg-[#B45309]"
                 >
                   Check In
                 </button>
@@ -270,7 +270,7 @@ export default function CalendarView({ profile }: Props) {
       <button
         type="button"
         onClick={() => setIsNewScheduleOpen(true)}
-        className="fixed bottom-24 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#D97706] shadow-lg hover:bg-[#B45309] transition-colors"
+        className="fixed bottom-[88px] right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
         aria-label="Schedule visit"
       >
         <Plus size={22} className="text-white" />

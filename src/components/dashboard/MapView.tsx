@@ -11,11 +11,11 @@ import CheckInModal from './CheckInModal'
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false })
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string; dot: string }> = {
-  cold_lead:      { label: 'Cold Lead',  color: '#3B82F6', bg: 'rgba(59,130,246,0.12)',  dot: '#3B82F6' },
-  hot_lead:       { label: 'Hot Lead',   color: '#F97316', bg: 'rgba(249,115,22,0.12)',  dot: '#F97316' },
-  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.12)',   dot: '#D97706' },
-  customer:       { label: 'Customer',   color: '#22C55E', bg: 'rgba(34,197,94,0.12)',   dot: '#22C55E' },
-  competitor:     { label: 'Competitor', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',   dot: '#EF4444' },
+  cold_lead:      { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)',  dot: '#0A84FF' },
+  hot_lead:       { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)',  dot: '#FF9F0A' },
+  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.15)',   dot: '#D97706' },
+  customer:       { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)',   dot: '#30D158' },
+  competitor:     { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)',   dot: '#FF453A' },
 }
 
 const STATUS_KEY: Record<string, LeadStatus> = {
@@ -71,17 +71,18 @@ export default function MapView({ leads, profile }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 160px)' }}>
-      {/* Filter pills — dedicated row */}
-      <div style={{
-        background: '#141414',
-        borderBottom: '1px solid #1E1E1E',
-        padding: '10px 16px',
-        display: 'flex',
-        gap: '6px',
-        overflowX: 'auto',
-        flexShrink: 0,
-        WebkitOverflowScrolling: 'touch',
-      }}
+      {/* Filter pills — dedicated row with solid background */}
+      <div
+        style={{
+          background: '#000',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          padding: '10px 16px',
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          flexShrink: 0,
+          WebkitOverflowScrolling: 'touch',
+        }}
         className="[&::-webkit-scrollbar]:hidden"
       >
         {FILTER_LABELS.map(f => (
@@ -90,17 +91,18 @@ export default function MapView({ leads, profile }: Props) {
             type="button"
             onClick={() => setActiveFilter(f)}
             style={{
-              background: activeFilter === f ? '#D97706' : '#1A1A1A',
-              color: activeFilter === f ? '#FFF' : '#7A7A7A',
-              border: activeFilter === f ? 'none' : '1px solid #2A2A2A',
+              background: activeFilter === f ? '#D97706' : 'rgba(255,255,255,0.07)',
+              color: activeFilter === f ? '#FFF' : '#8E8E93',
+              border: 'none',
               borderRadius: '20px',
-              padding: '5px 12px',
-              fontSize: '12px',
+              padding: '6px 14px',
+              fontSize: '13px',
               fontWeight: 500,
               fontFamily: 'inherit',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               flexShrink: 0,
+              transition: 'all 0.15s',
             }}
           >
             {f}
@@ -115,7 +117,7 @@ export default function MapView({ leads, profile }: Props) {
           <button
             type="button"
             onClick={handleMyLocation}
-            className="flex items-center justify-center rounded-lg border border-[#2A2A2A] bg-[#1A1A1A]/90 p-2 shadow-lg backdrop-blur-sm transition-colors hover:bg-[#2A2A2A]"
+            className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-black/90 p-2.5 shadow-lg backdrop-blur-sm transition-all active:scale-[0.92] hover:bg-white/[0.10]"
             title="My location"
           >
             <Crosshair size={16} className="text-[#D97706]" />
@@ -124,9 +126,9 @@ export default function MapView({ leads, profile }: Props) {
 
         {/* Pin count badge */}
         <div className="absolute right-3 top-14 z-[400]">
-          <div className="flex items-center gap-1.5 rounded-lg border border-[#2A2A2A] bg-[#1A1A1A]/90 px-2.5 py-1.5 shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-black/90 px-2.5 py-1.5 shadow-lg backdrop-blur-sm">
             <MapPin size={12} className="text-[#D97706]" />
-            <span className="text-[11px] font-medium text-[#A0A0A0]">
+            <span className="text-[11px] font-medium text-[#8E8E93]">
               {mappedCount} pin{mappedCount !== 1 ? 's' : ''}
             </span>
           </div>
@@ -138,7 +140,7 @@ export default function MapView({ leads, profile }: Props) {
         {/* Bottom popup for selected lead */}
         {selectedLead && !isDrawerOpen && !isCheckInOpen && (
           <div className="absolute bottom-4 left-0 right-0 z-[400] px-3">
-            <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A]/95 p-4 shadow-2xl backdrop-blur-sm transition-all">
+            <div className="rounded-2xl border border-white/[0.08] bg-black/95 p-4 shadow-2xl backdrop-blur-xl transition-all">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -146,11 +148,11 @@ export default function MapView({ leads, profile }: Props) {
                       className="h-2 w-2 flex-shrink-0 rounded-full"
                       style={{ backgroundColor: STATUS_META[selectedLead.status].dot }}
                     />
-                    <p className="truncate text-[14px] font-semibold text-white">
+                    <p className="truncate text-[15px] font-semibold text-white">
                       {selectedLead.cafe_name}
                     </p>
                     <span
-                      className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                      className="flex-shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-semibold"
                       style={{
                         backgroundColor: STATUS_META[selectedLead.status].bg,
                         color: STATUS_META[selectedLead.status].color,
@@ -160,7 +162,7 @@ export default function MapView({ leads, profile }: Props) {
                     </span>
                   </div>
                   {selectedLead.location_address && (
-                    <p className="mt-1 truncate text-[12px] text-[#7A7A7A]">
+                    <p className="mt-1 truncate text-[13px] text-[#8E8E93]">
                       {selectedLead.location_address}
                     </p>
                   )}
@@ -168,7 +170,7 @@ export default function MapView({ leads, profile }: Props) {
                 <button
                   type="button"
                   onClick={() => setSelectedLead(null)}
-                  className="flex-shrink-0 rounded-lg border border-[#2A2A2A] p-1 text-[#7A7A7A] hover:text-white transition-colors"
+                  className="flex-shrink-0 rounded-xl bg-white/[0.07] p-1.5 text-[#8E8E93] transition-colors hover:text-white"
                 >
                   <X size={14} />
                 </button>
@@ -177,14 +179,14 @@ export default function MapView({ leads, profile }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsCheckInOpen(true)}
-                  className="flex-1 rounded-lg bg-[#D97706] py-2 text-[12px] font-semibold text-white hover:bg-[#B45309] transition-colors"
+                  className="flex-1 rounded-xl bg-[#D97706] py-2.5 text-[13px] font-semibold text-white transition-all active:scale-[0.96] hover:bg-[#B45309]"
                 >
                   Check In
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(true)}
-                  className="flex-1 rounded-lg border border-[#2A2A2A] py-2 text-[12px] font-medium text-[#A0A0A0] hover:text-white transition-colors"
+                  className="flex-1 rounded-xl bg-white/[0.07] py-2.5 text-[13px] font-medium text-[#8E8E93] transition-all hover:text-white"
                 >
                   View Details
                 </button>

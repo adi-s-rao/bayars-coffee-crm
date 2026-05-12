@@ -172,9 +172,9 @@ export default function DashboardShell({ profile, children }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0A0A0A]">
+    <div className="flex min-h-screen flex-col bg-black">
       {/* Top Navbar */}
-      <header className="relative sticky top-0 z-30 border-b border-[#1E1E1E] bg-[#141414] px-4 py-3.5">
+      <header className="relative sticky top-0 z-30 border-b border-white/[0.08] bg-black/85 px-4 py-3.5 backdrop-blur-xl">
         {/* Page transition loading bar */}
         {isPending && (
           <div className="absolute left-0 right-0 top-0 z-50 h-[2px] bg-[#D97706]" />
@@ -184,15 +184,15 @@ export default function DashboardShell({ profile, children }: Props) {
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="text-[#A0A0A0] hover:text-white transition-colors"
+              className="text-[#8E8E93] transition-colors hover:text-white active:scale-[0.92]"
             >
-              <Menu size={18} />
+              <Menu size={20} />
             </button>
             <span className="text-[15px] font-semibold text-white">Bayar&apos;s CRM</span>
           </div>
           <div className="flex items-center gap-3">
-            <button type="button" className="text-[#A0A0A0] hover:text-white transition-colors">
-              <Bell size={18} />
+            <button type="button" className="text-[#8E8E93] transition-colors hover:text-white">
+              <Bell size={20} />
             </button>
 
             {/* Avatar + dropdown wrapper */}
@@ -200,7 +200,7 @@ export default function DashboardShell({ profile, children }: Props) {
               <button
                 type="button"
                 onClick={() => setIsProfileDropdownOpen(v => !v)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15 hover:border-amber-500/60 transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/40 bg-amber-600/15 transition-colors hover:border-amber-500/60 active:scale-[0.92]"
               >
                 <span className="text-[12px] font-semibold text-[#D97706]">
                   {getInitials(profile.full_name)}
@@ -209,18 +209,18 @@ export default function DashboardShell({ profile, children }: Props) {
 
               {/* Profile dropdown */}
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 top-10 z-[100] w-[220px] rounded-xl border border-[#2A2A2A] bg-[#1C1C1C] py-1 shadow-xl">
+                <div className="absolute right-0 top-10 z-[100] w-[220px] rounded-2xl border border-white/[0.08] bg-[#1C1C1E] py-1 shadow-2xl backdrop-blur-xl">
                   {/* User info */}
-                  <div className="border-b border-[#1E1E1E] px-4 py-3">
-                    <p className="text-[13px] font-medium text-white">{profile.full_name}</p>
-                    <p className="text-[11px] text-[#555]">{profile.email}</p>
+                  <div className="border-b border-white/[0.08] px-4 py-3">
+                    <p className="text-[13px] font-semibold text-white">{profile.full_name}</p>
+                    <p className="text-[11px] text-[#636366]">{profile.email}</p>
                   </div>
                   {/* Menu items */}
                   <div className="px-2 py-1">
                     <button
                       type="button"
                       onClick={() => { setIsSettingsOpen(true); setIsProfileDropdownOpen(false) }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#A0A0A0] hover:bg-[#2A2A2A] transition-colors"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-[#8E8E93] transition-colors hover:bg-white/[0.07] hover:text-white"
                     >
                       <Settings size={14} />
                       Settings
@@ -228,16 +228,16 @@ export default function DashboardShell({ profile, children }: Props) {
                     <button
                       type="button"
                       onClick={() => { void signOut(); setIsProfileDropdownOpen(false) }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#A0A0A0] hover:bg-[#2A2A2A] transition-colors"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-[#8E8E93] transition-colors hover:bg-white/[0.07] hover:text-white"
                     >
                       <RefreshCw size={14} />
                       Switch User
                     </button>
-                    <div className="my-1 border-t border-[#1E1E1E]" />
+                    <div className="my-1 border-t border-white/[0.08]" />
                     <button
                       type="button"
                       onClick={signOut}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-red-400 hover:bg-[#2A2A2A] transition-colors"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-red-400 transition-colors hover:bg-white/[0.07]"
                     >
                       <LogOut size={14} />
                       Sign Out
@@ -252,27 +252,27 @@ export default function DashboardShell({ profile, children }: Props) {
 
       {/* Day Status Bar */}
       <div
-        className={`border-b border-[#1E1E1E] bg-[#141414] px-4 py-2.5 border-l-2 ${
-          dayState?.started ? 'border-l-[#22C55E]' : 'border-l-[#555]'
+        className={`border-b border-white/[0.08] bg-black/85 px-4 py-2.5 backdrop-blur-xl border-l-2 ${
+          dayState?.started ? 'border-l-[#30D158]' : 'border-l-[#3A3A3C]'
         }`}
       >
         <div className="flex items-center justify-between">
           {dayState?.started ? (
             <div className="flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#30D158] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#30D158]" />
               </span>
-              <span className="text-[13px] font-medium text-[#E5E5E5]">Day Started</span>
-              <span className="text-[#555]">•</span>
-              <span className="text-[13px] text-[#7A7A7A]">
+              <span className="text-[13px] font-medium text-[#E5E5E7]">Day Started</span>
+              <span className="text-[#3A3A3C]">•</span>
+              <span className="text-[13px] text-[#8E8E93]">
                 {format(new Date(dayState.startTime), 'h:mm a')}
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#555]" />
-              <span className="text-[13px] text-[#7A7A7A]">Day not started</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3A3A3C]" />
+              <span className="text-[13px] text-[#8E8E93]">Day not started</span>
             </div>
           )}
           <div>
@@ -281,7 +281,7 @@ export default function DashboardShell({ profile, children }: Props) {
                 type="button"
                 onClick={handleEndDay}
                 disabled={dayLoading}
-                className="flex items-center gap-1.5 rounded-md border border-red-500 px-3 py-1 text-[12px] font-medium text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg border border-red-500/40 px-3 py-1 text-[12px] font-medium text-[#FF453A] transition-all active:scale-[0.96] hover:bg-red-500/10 disabled:opacity-50"
               >
                 {dayLoading && <Loader2 size={11} className="animate-spin" />}
                 End Day
@@ -291,7 +291,7 @@ export default function DashboardShell({ profile, children }: Props) {
                 type="button"
                 onClick={handleStartDay}
                 disabled={dayLoading}
-                className="flex items-center gap-1.5 rounded-md bg-[#22C55E] px-3 py-1 text-[12px] font-medium text-white hover:bg-green-600 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-[#30D158] px-3 py-1 text-[12px] font-medium text-white transition-all active:scale-[0.96] hover:bg-green-500 disabled:opacity-50"
               >
                 {dayLoading && <Loader2 size={11} className="animate-spin" />}
                 Start Day
@@ -304,9 +304,12 @@ export default function DashboardShell({ profile, children }: Props) {
       {/* Main content */}
       <main className="flex-1">{children}</main>
 
-      {/* Bottom Nav — z-[1000] ensures it appears above Leaflet map layers */}
-      <nav className="fixed bottom-0 left-0 right-0 z-[1000] border-t border-[#1E1E1E] bg-[#141414] px-4 py-3">
-        <div className="flex items-center justify-around">
+      {/* Bottom Tab Bar — z-[1000] ensures it appears above Leaflet map layers */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-[1000] border-t border-white/[0.08] bg-black/85 backdrop-blur-xl"
+        style={{ height: '80px' }}
+      >
+        <div className="flex h-full items-center justify-around px-4">
           {NAV_ITEMS.map(({ label, href, Icon }) => {
             const active = pathname === href
             return (
@@ -320,12 +323,12 @@ export default function DashboardShell({ profile, children }: Props) {
                     startTransition(() => router.push(href))
                   }
                 }}
-                className="flex flex-col items-center gap-1 transition-colors"
+                className="flex min-w-[56px] flex-col items-center gap-[3px] py-2 transition-all active:scale-[0.88]"
               >
-                <Icon size={20} color={active ? '#D97706' : '#555'} />
+                <Icon size={24} color={active ? '#D97706' : '#636366'} />
                 <span
                   className="text-[10px] font-medium"
-                  style={{ color: active ? '#D97706' : '#555' }}
+                  style={{ color: active ? '#D97706' : '#636366' }}
                 >
                   {label}
                 </span>
