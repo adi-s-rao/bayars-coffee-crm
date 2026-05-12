@@ -34,6 +34,7 @@ export default function LeafletMap({ leads, onMarkerClick }: Props) {
     style.id = 'leaflet-dark-override'
     style.textContent = `
       .leaflet-container { background: #0A0A0A !important; }
+      .leaflet-tile { filter: brightness(0.45) contrast(1.2) saturate(0.5); }
       .leaflet-control-zoom a { background: #1A1A1A !important; color: #A0A0A0 !important; border-color: #2A2A2A !important; }
       .leaflet-control-zoom a:hover { background: #2A2A2A !important; color: #fff !important; }
       .leaflet-control-attribution { background: rgba(10,10,10,0.7) !important; color: #555 !important; font-size: 10px; }

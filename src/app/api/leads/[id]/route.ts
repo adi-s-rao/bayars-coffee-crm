@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { type NextRequest, NextResponse } from 'next/server'
 
@@ -10,7 +11,8 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data, error } = await supabase
+    const admin = createAdminClient()
+    const { data, error } = await admin
       .from('leads')
       .select('*')
       .eq('id', id)
@@ -31,20 +33,26 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json() as Record<string, unknown>
+    console.log('PATCH /api/leads/[id] body:', body)
 
     // Strip immutable fields
     const { id: _id, created_by: _cb, created_at: _ca, updated_at: _ua, ...updateFields } = body
 
-    const { data, error } = await supabase
+    const admin = createAdminClient()
+    const { data, error } = await admin
       .from('leads')
       .update(updateFields)
       .eq('id', id)
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.log('PATCH error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json({ lead: data })
-  } catch {
+  } catch (e) {
+    console.error('PATCH /api/leads/[id] exception:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -56,7 +64,8 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { error } = await supabase
+    const admin = createAdminClient()
+    const { error } = await admin
       .from('leads')
       .delete()
       .eq('id', id)

@@ -39,17 +39,23 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
     setSubmitting(true)
     setError('')
     try {
-      const scheduledDate = new Date(`${date}T${time || '00:00'}:00`).toISOString()
+      const scheduledDateTime = new Date(`${date}T${time || '09:00'}`)
+      const body = {
+        scheduled_date: scheduledDateTime.toISOString(),
+        scheduled_type: visitType,
+        ...(notes.trim() ? { remarks: notes.trim() } : {}),
+      }
       const res = await fetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scheduled_date: scheduledDate,
-          scheduled_type: visitType,
-          ...(notes.trim() ? { remarks: notes.trim() } : {}),
-        }),
+        body: JSON.stringify(body),
       })
-      if (!res.ok) throw new Error('Failed to schedule')
+      if (!res.ok) {
+        const err = await res.json() as { error?: string }
+        console.error('Schedule error:', err)
+        setError('Failed to schedule: ' + (err.error ?? 'unknown'))
+        return
+      }
       const { lead: updated } = await res.json() as { lead: Lead }
       onScheduled(updated)
       onClose()

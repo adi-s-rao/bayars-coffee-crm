@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, MapPin, X } from 'lucide-react'
+import { AlertTriangle, Loader2, MapPin, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CheckInType, Lead, LeadStatus, Profile } from '@/types'
 
@@ -23,10 +23,27 @@ const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string
 
 const CHECKIN_TYPES: CheckInType[] = ['visit', 'demo', 'workshop']
 
+function haversineMetres(
+  lat1: number, lon1: number,
+  lat2: number, lon2: number
+): number {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(a))
+}
+
 export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profile }: Props) {
   const [checkinType, setCheckinType] = useState<CheckInType>('visit')
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsNote, setGpsNote] = useState<string | null>(null)
+  const [geofenceWarning, setGeofenceWarning] = useState<{ distance: number } | null>(null)
   const [remarks, setRemarks] = useState('')
   const [gatePass, setGatePass] = useState('')
   const [beansUsed, setBeansUsed] = useState(false)
@@ -40,6 +57,8 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
 
   async function captureLocation() {
     setGpsLoading(true)
+    setGeofenceWarning(null)
+    setGpsNote(null)
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -47,7 +66,19 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           timeout: 10000,
         })
       )
-      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+      const capturedLat = pos.coords.latitude
+      const capturedLng = pos.coords.longitude
+
+      if (lead.latitude != null && lead.longitude != null) {
+        const dist = haversineMetres(capturedLat, capturedLng, lead.latitude, lead.longitude)
+        if (dist > 100) {
+          setGeofenceWarning({ distance: Math.round(dist) })
+        }
+      } else {
+        setGpsNote('Lead has no GPS — location not verified')
+      }
+
+      setLocation({ lat: capturedLat, lng: capturedLng })
     } catch {
       toast.error('Could not get your location. Please enable GPS.')
     } finally {
@@ -55,7 +86,13 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
     }
   }
 
-  async function handleSubmit() {
+  function cancelGps() {
+    setLocation(null)
+    setGeofenceWarning(null)
+    setGpsNote(null)
+  }
+
+  async function handleSubmit(flagged = false) {
     if (!location) return
     setSubmitting(true)
     try {
@@ -74,6 +111,8 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           beans_used: beansUsed,
           bean_brand: beansUsed ? beanBrand || undefined : undefined,
           bean_amount_kg: beansUsed && beanAmount ? parseFloat(beanAmount) : undefined,
+          geofence_flagged: flagged,
+          geofence_distance_m: flagged && geofenceWarning ? geofenceWarning.distance : undefined,
         }),
       })
       if (!res.ok) throw new Error('Failed')
@@ -144,7 +183,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           {location ? (
             <div className="flex items-center gap-2 rounded-lg border border-[#22C55E]/30 bg-[#22C55E]/10 px-3 py-2.5">
               <MapPin size={14} className="text-[#22C55E]" />
-              <span className="text-[12px] text-[#22C55E]">Location captured</span>
+              <span className="flex-1 text-[12px] text-[#22C55E]">Location captured</span>
             </div>
           ) : (
             <button
@@ -156,6 +195,43 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
               {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
               {gpsLoading ? 'Getting location…' : 'Capture Location'}
             </button>
+          )}
+
+          {/* GPS note (no lead GPS) */}
+          {gpsNote && (
+            <p className="mt-1.5 text-[11px] text-[#555]">{gpsNote}</p>
+          )}
+
+          {/* Geofence warning */}
+          {geofenceWarning && (
+            <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={14} className="flex-shrink-0 text-red-400" />
+                <span className="text-[12px] text-red-400">
+                  You are {geofenceWarning.distance}m away from this location
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-[#555]">
+                Check-in recorded but flagged for review
+              </p>
+              <div className="mt-2.5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={cancelGps}
+                  className="flex-1 rounded-md border border-[#2A2A2A] py-1.5 text-[12px] text-[#A0A0A0] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmit(true)}
+                  disabled={submitting}
+                  className="flex-1 rounded-md border border-red-500/30 bg-red-500/20 py-1.5 text-[12px] text-red-400 hover:bg-red-500/30 disabled:opacity-50 transition-colors"
+                >
+                  {submitting ? 'Submitting…' : 'Check In Anyway'}
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -217,12 +293,12 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           )}
         </div>
 
-        {/* Submit */}
+        {/* Submit — disabled when geofence warning is active (force explicit "Check In Anyway") */}
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!location || submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#D97706] py-2.5 text-sm font-semibold text-white hover:bg-[#B45309] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          onClick={() => void handleSubmit(false)}
+          disabled={!location || submitting || geofenceWarning != null}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#D97706] py-2.5 text-sm font-semibold text-white hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
         >
           {submitting && <Loader2 size={16} className="animate-spin" />}
           {submitting ? 'Submitting…' : 'Submit Check-in'}

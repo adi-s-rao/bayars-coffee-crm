@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import NewScheduleModal from './NewScheduleModal'
 import {
   addMonths,
   subMonths,
@@ -44,11 +46,13 @@ interface Props {
 }
 
 export default function CalendarView({ leads: initialLeads }: Props) {
+  const router = useRouter()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [localLeads, setLocalLeads] = useState(initialLeads)
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isNewScheduleOpen, setIsNewScheduleOpen] = useState(false)
 
   const scheduledLeads = localLeads.filter(l => l.scheduled_date)
 
@@ -233,6 +237,26 @@ export default function CalendarView({ leads: initialLeads }: Props) {
         onClose={() => setIsDrawerOpen(false)}
         onUpdate={handleLeadUpdate}
         onDelete={handleLeadDelete}
+      />
+
+      {/* Floating add schedule button */}
+      <button
+        type="button"
+        onClick={() => setIsNewScheduleOpen(true)}
+        className="fixed bottom-24 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#D97706] shadow-lg hover:bg-[#B45309] transition-colors"
+        aria-label="Schedule visit"
+      >
+        <Plus size={22} className="text-white" />
+      </button>
+
+      <NewScheduleModal
+        isOpen={isNewScheduleOpen}
+        onClose={() => setIsNewScheduleOpen(false)}
+        selectedDate={selectedDate}
+        onScheduled={() => {
+          setIsNewScheduleOpen(false)
+          router.refresh()
+        }}
       />
     </div>
   )

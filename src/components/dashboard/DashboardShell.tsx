@@ -1,12 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart2, Bell, Calendar, Home, Loader2, MapPin, Menu } from 'lucide-react'
+import {
+  BarChart2,
+  Bell,
+  Calendar,
+  Home,
+  Loader2,
+  LogOut,
+  MapPin,
+  Menu,
+  RefreshCw,
+  Settings,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
 import { format } from 'date-fns'
+import Sidebar from './Sidebar'
+import SettingsModal from './SettingsModal'
 
 interface DayState {
   started: boolean
@@ -34,28 +47,46 @@ async function signOut() {
 }
 
 const NAV_ITEMS = [
-  { label: 'Home', href: '/dashboard', Icon: Home },
-  { label: 'Map', href: '/dashboard/map', Icon: MapPin },
+  { label: 'Home',     href: '/dashboard',          Icon: Home },
+  { label: 'Map',      href: '/dashboard/map',      Icon: MapPin },
   { label: 'Calendar', href: '/dashboard/calendar', Icon: Calendar },
-  { label: 'Reports', href: '/dashboard/reports', Icon: BarChart2 },
+  { label: 'Reports',  href: '/dashboard/reports',  Icon: BarChart2 },
 ]
 
 export default function DashboardShell({ profile, children }: Props) {
   const pathname = usePathname()
+
   const [dayState, setDayState] = useState<DayState | null>(null)
   const [dayLoading, setDayLoading] = useState(false)
 
-  // Load persisted day state from localStorage
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Load persisted day state
   useEffect(() => {
     try {
       const stored = localStorage.getItem('bayars_day_state')
-      if (stored) {
-        setDayState(JSON.parse(stored) as DayState)
-      }
+      if (stored) setDayState(JSON.parse(stored) as DayState)
     } catch {
-      // ignore parse errors
+      // ignore
     }
   }, [])
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsProfileDropdownOpen(false)
+      }
+    }
+    if (isProfileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isProfileDropdownOpen])
 
   function getPosition(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) =>
@@ -76,7 +107,6 @@ export default function DashboardShell({ profile, children }: Props) {
       setDayLoading(false)
       return
     }
-
     try {
       const res = await fetch('/api/checkins', {
         method: 'POST',
@@ -116,7 +146,6 @@ export default function DashboardShell({ profile, children }: Props) {
       setDayLoading(false)
       return
     }
-
     try {
       const res = await fetch('/api/checkins', {
         method: 'POST',
@@ -146,23 +175,71 @@ export default function DashboardShell({ profile, children }: Props) {
       <header className="sticky top-0 z-30 border-b border-[#1E1E1E] bg-[#141414] px-4 py-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Menu size={18} className="text-[#A0A0A0]" />
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="text-[#A0A0A0] hover:text-white transition-colors"
+            >
+              <Menu size={18} />
+            </button>
             <span className="text-[15px] font-semibold text-white">Bayar&apos;s CRM</span>
           </div>
           <div className="flex items-center gap-3">
             <button type="button" className="text-[#A0A0A0] hover:text-white transition-colors">
               <Bell size={18} />
             </button>
-            <button
-              type="button"
-              onClick={signOut}
-              title="Sign out"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15 hover:border-red-500/40 hover:bg-red-500/10 transition-colors"
-            >
-              <span className="text-[12px] font-semibold text-[#D97706]">
-                {getInitials(profile.full_name)}
-              </span>
-            </button>
+
+            {/* Avatar + dropdown wrapper */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileDropdownOpen(v => !v)}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15 hover:border-amber-500/60 transition-colors"
+              >
+                <span className="text-[12px] font-semibold text-[#D97706]">
+                  {getInitials(profile.full_name)}
+                </span>
+              </button>
+
+              {/* Profile dropdown */}
+              {isProfileDropdownOpen && (
+                <div className="absolute right-0 top-10 z-[100] w-[220px] rounded-xl border border-[#2A2A2A] bg-[#1C1C1C] py-1 shadow-xl">
+                  {/* User info */}
+                  <div className="border-b border-[#1E1E1E] px-4 py-3">
+                    <p className="text-[13px] font-medium text-white">{profile.full_name}</p>
+                    <p className="text-[11px] text-[#555]">{profile.email}</p>
+                  </div>
+                  {/* Menu items */}
+                  <div className="px-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() => { setIsSettingsOpen(true); setIsProfileDropdownOpen(false) }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#A0A0A0] hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      <Settings size={14} />
+                      Settings
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { void signOut(); setIsProfileDropdownOpen(false) }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#A0A0A0] hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      <RefreshCw size={14} />
+                      Switch User
+                    </button>
+                    <div className="my-1 border-t border-[#1E1E1E]" />
+                    <button
+                      type="button"
+                      onClick={signOut}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-red-400 hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      <LogOut size={14} />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -176,7 +253,6 @@ export default function DashboardShell({ profile, children }: Props) {
         <div className="flex items-center justify-between">
           {dayState?.started ? (
             <div className="flex items-center gap-2">
-              {/* Pulsing green dot */}
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
@@ -193,7 +269,6 @@ export default function DashboardShell({ profile, children }: Props) {
               <span className="text-[13px] text-[#7A7A7A]">Day not started</span>
             </div>
           )}
-
           <div>
             {dayState?.started ? (
               <button
@@ -223,8 +298,8 @@ export default function DashboardShell({ profile, children }: Props) {
       {/* Main content */}
       <main className="flex-1">{children}</main>
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#1E1E1E] bg-[#141414] px-4 py-3">
+      {/* Bottom Nav — z-[1000] ensures it appears above Leaflet map layers */}
+      <nav className="fixed bottom-0 left-0 right-0 z-[1000] border-t border-[#1E1E1E] bg-[#141414] px-4 py-3">
         <div className="flex items-center justify-around">
           {NAV_ITEMS.map(({ label, href, Icon }) => {
             const active = pathname === href
@@ -246,6 +321,21 @@ export default function DashboardShell({ profile, children }: Props) {
           })}
         </div>
       </nav>
+
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        profile={profile}
+        onSettingsOpen={() => setIsSettingsOpen(true)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        profile={profile}
+      />
     </div>
   )
 }

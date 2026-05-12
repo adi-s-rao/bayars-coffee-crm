@@ -33,6 +33,8 @@ interface CheckInBody {
   beans_used?: boolean
   bean_brand?: string
   bean_amount_kg?: number
+  geofence_flagged?: boolean
+  geofence_distance_m?: number
 }
 
 export async function POST(request: NextRequest) {
@@ -88,6 +90,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Prepend geofence flag to remarks when the rep checked in from outside the radius
+    const flagPrefix = body.geofence_flagged && body.geofence_distance_m
+      ? `[FLAGGED: ${body.geofence_distance_m}m away] `
+      : ''
+    const finalRemarks = flagPrefix
+      ? `${flagPrefix}${body.remarks ?? ''}`.trim()
+      : (body.remarks ?? null)
+
     const { data, error } = await admin
       .from('checkins')
       .insert({
@@ -97,7 +107,7 @@ export async function POST(request: NextRequest) {
         lead_id: body.lead_id ?? null,
         user_id: body.user_id,
         user_name: body.user_name,
-        remarks: body.remarks ?? null,
+        remarks: finalRemarks,
         gate_pass_number: body.gate_pass_number ?? null,
         beans_used: body.beans_used ?? false,
         bean_brand: body.bean_brand ?? null,

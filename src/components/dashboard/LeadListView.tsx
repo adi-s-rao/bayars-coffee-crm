@@ -49,6 +49,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
   const [checkInCount, setCheckInCount] = useState(0)
   const [totalKm, setTotalKm] = useState(0)
+  const [checkinRefreshKey, setCheckinRefreshKey] = useState(0)
 
   useEffect(() => {
     fetch('/api/checkins/today')
@@ -94,6 +95,11 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   function handleLeadUpdate(updated: Lead) {
     setLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
     setSelectedLead(updated)
+  }
+
+  function handleCheckInSuccess(updated: Lead) {
+    handleLeadUpdate(updated)
+    setCheckinRefreshKey(k => k + 1)
   }
 
   function handleLeadDelete(leadId: string) {
@@ -269,6 +275,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
         onClose={() => setIsDrawerOpen(false)}
         onUpdate={handleLeadUpdate}
         onDelete={handleLeadDelete}
+        refreshTrigger={checkinRefreshKey}
       />
 
       {selectedLead && (
@@ -276,7 +283,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
           lead={selectedLead}
           isOpen={isCheckInOpen}
           onClose={() => setIsCheckInOpen(false)}
-          onCheckedIn={handleLeadUpdate}
+          onCheckedIn={handleCheckInSuccess}
           profile={profile}
         />
       )}

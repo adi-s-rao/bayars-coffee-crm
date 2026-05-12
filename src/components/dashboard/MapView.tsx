@@ -61,7 +61,7 @@ export default function MapView({ leads, profile }: Props) {
   }
 
   return (
-    <div className="relative" style={{ height: 'calc(100dvh - 5.75rem)' }}>
+    <div className="relative" style={{ height: 'calc(100dvh - 160px)' }}>
       {/* Filter pills — floating over map */}
       <div className="absolute left-0 right-0 top-0 z-[400] flex gap-1.5 overflow-x-auto px-3 py-2 [&::-webkit-scrollbar]:hidden">
         {FILTER_PILLS.map(({ label, value }) => (

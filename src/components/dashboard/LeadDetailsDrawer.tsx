@@ -12,6 +12,7 @@ interface Props {
   onClose: () => void
   onUpdate: (lead: Lead) => void
   onDelete: (leadId: string) => void
+  refreshTrigger?: number
 }
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string }> = {
@@ -37,7 +38,7 @@ type NumericField = 'bean_usage_kg' | 'bean_price_per_kg' | 'cappuccino_price' |
 const inputClass =
   'w-full rounded-lg border border-[#2A2A2A] bg-[#111] px-3 py-2 text-sm text-white outline-none focus:border-[#D97706] focus:ring-1 focus:ring-amber-600/20 transition-colors'
 
-export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onDelete }: Props) {
+export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onDelete, refreshTrigger }: Props) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('overview')
   const overviewRef = useRef<HTMLButtonElement>(null)
   const coffeeRef = useRef<HTMLButtonElement>(null)
@@ -69,17 +70,16 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     }
   }, [activeTab])
 
-  // Load checkins when activity tab opens
+  // Load checkins on drawer open or after a new checkin (refreshTrigger)
   useEffect(() => {
-    if (activeTab === 'activity' && lead?.id) {
-      setCheckinsLoading(true)
-      fetch(`/api/leads/${lead.id}/checkins`)
-        .then(r => r.json())
-        .then((d: { checkins: CheckIn[] }) => setCheckins(d.checkins ?? []))
-        .catch(() => toast.error('Failed to load activity'))
-        .finally(() => setCheckinsLoading(false))
-    }
-  }, [activeTab, lead?.id])
+    if (!lead?.id) return
+    setCheckinsLoading(true)
+    fetch(`/api/leads/${lead.id}/checkins`)
+      .then(r => r.json())
+      .then((d: { checkins: CheckIn[] }) => setCheckins(d.checkins ?? []))
+      .catch(() => setCheckins([]))
+      .finally(() => setCheckinsLoading(false))
+  }, [lead?.id, refreshTrigger])
 
   async function handleSave() {
     if (!localLead) return
