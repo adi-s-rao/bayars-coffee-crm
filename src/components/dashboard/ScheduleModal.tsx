@@ -24,8 +24,8 @@ const inputClass =
 
 export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Props) {
   const [visitType, setVisitType] = useState<CheckInType>('visit')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('10:00')
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [time, setTime] = useState('09:00')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -116,6 +116,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
             min={today}
             onChange={e => setDate(e.target.value)}
             className={inputClass}
+            style={{ colorScheme: 'dark' }}
           />
         </div>
 
@@ -127,6 +128,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
             value={time}
             onChange={e => setTime(e.target.value)}
             className={inputClass}
+            style={{ colorScheme: 'dark' }}
           />
         </div>
 

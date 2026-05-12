@@ -45,7 +45,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
   const [pickedLead, setPickedLead] = useState<Lead | null>(null)
   const [visitType, setVisitType] = useState<CheckInType>('visit')
   const [date, setDate] = useState('')
-  const [time, setTime] = useState('10:00')
+  const [time, setTime] = useState('09:00')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -208,6 +208,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
             value={date}
             onChange={e => setDate(e.target.value)}
             className={inputClass}
+            style={{ colorScheme: 'dark' }}
           />
         </div>
 
@@ -219,6 +220,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
             value={time}
             onChange={e => setTime(e.target.value)}
             className={inputClass}
+            style={{ colorScheme: 'dark' }}
           />
         </div>
 

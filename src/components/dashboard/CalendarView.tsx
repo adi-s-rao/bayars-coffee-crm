@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import NewScheduleModal from './NewScheduleModal'
 import {
   addMonths,
@@ -41,18 +40,28 @@ const SCHEDULED_TYPE_LABEL: Record<string, string> = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-interface Props {
-  leads: Lead[]
-}
-
-export default function CalendarView({ leads: initialLeads }: Props) {
-  const router = useRouter()
+export default function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [localLeads, setLocalLeads] = useState(initialLeads)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [localLeads, setLocalLeads] = useState<Lead[]>([])
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isNewScheduleOpen, setIsNewScheduleOpen] = useState(false)
+
+  const fetchScheduled = useCallback(async () => {
+    try {
+      const res = await fetch('/api/leads/scheduled')
+      if (!res.ok) return
+      const { leads } = await res.json() as { leads: Lead[] }
+      setLocalLeads(leads ?? [])
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchScheduled()
+  }, [fetchScheduled])
 
   const scheduledLeads = localLeads.filter(l => l.scheduled_date)
 
@@ -72,7 +81,7 @@ export default function CalendarView({ leads: initialLeads }: Props) {
   ]
   while (cells.length % 7 !== 0) cells.push(null)
 
-  const selectedDayLeads = selectedDate ? getLeadsForDay(selectedDate) : []
+  const selectedDayLeads = getLeadsForDay(selectedDate)
 
   function handleLeadUpdate(updated: Lead) {
     setLocalLeads(prev => prev.map(l => (l.id === updated.id ? updated : l)))
@@ -131,13 +140,13 @@ export default function CalendarView({ leads: initialLeads }: Props) {
           )
           const dayLeads = getLeadsForDay(date)
           const todayCell = isToday(date)
-          const isSelected = selectedDate ? isSameDay(date, selectedDate) : false
+          const isSelected = isSameDay(date, selectedDate)
 
           return (
             <button
               key={day}
               type="button"
-              onClick={() => setSelectedDate(isSelected ? null : date)}
+              onClick={() => setSelectedDate(date)}
               className={`relative flex flex-col items-center rounded-lg py-1.5 transition-colors ${
                 isSelected
                   ? 'bg-[#D97706]/20'
@@ -174,62 +183,60 @@ export default function CalendarView({ leads: initialLeads }: Props) {
       </div>
 
       {/* Selected day schedule list */}
-      {selectedDate && (
-        <div className="mt-4 px-4">
-          <p className="mb-3 text-[12px] font-medium text-[#7A7A7A]">
-            {format(selectedDate, 'EEEE, MMMM d')}
-            {' · '}
-            <span className="text-[#A0A0A0]">
-              {selectedDayLeads.length} scheduled
-            </span>
-          </p>
+      <div className="mt-4 px-4">
+        <p className="mb-3 text-[12px] font-medium text-[#7A7A7A]">
+          {format(selectedDate, 'EEEE, MMMM d')}
+          {' · '}
+          <span className="text-[#A0A0A0]">
+            {selectedDayLeads.length} scheduled
+          </span>
+        </p>
 
-          {selectedDayLeads.length === 0 ? (
-            <p className="py-6 text-center text-[13px] text-[#444]">
-              No visits scheduled
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {selectedDayLeads.map(lead => (
-                <button
-                  key={lead.id}
-                  type="button"
-                  onClick={() => {
-                    setDrawerLead(lead)
-                    setIsDrawerOpen(true)
+        {selectedDayLeads.length === 0 ? (
+          <p className="py-6 text-center text-[13px] text-[#444]">
+            No visits scheduled
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {selectedDayLeads.map(lead => (
+              <button
+                key={lead.id}
+                type="button"
+                onClick={() => {
+                  setDrawerLead(lead)
+                  setIsDrawerOpen(true)
+                }}
+                className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] px-3.5 py-3 text-left transition-colors hover:border-[#3A3A3A]"
+              >
+                <span
+                  className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: STATUS_COLOR[lead.status] }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-white">
+                    {lead.cafe_name}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#7A7A7A]">
+                    {lead.scheduled_date &&
+                      format(new Date(lead.scheduled_date), 'h:mm a')}
+                    {lead.scheduled_type &&
+                      ` · ${SCHEDULED_TYPE_LABEL[lead.scheduled_type] ?? lead.scheduled_type}`}
+                  </p>
+                </div>
+                <span
+                  className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${STATUS_COLOR[lead.status]}20`,
+                    color: STATUS_COLOR[lead.status],
                   }}
-                  className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] px-3.5 py-3 text-left transition-colors hover:border-[#3A3A3A]"
                 >
-                  <span
-                    className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: STATUS_COLOR[lead.status] }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-white">
-                      {lead.cafe_name}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-[#7A7A7A]">
-                      {lead.scheduled_date &&
-                        format(new Date(lead.scheduled_date), 'h:mm a')}
-                      {lead.scheduled_type &&
-                        ` · ${SCHEDULED_TYPE_LABEL[lead.scheduled_type] ?? lead.scheduled_type}`}
-                    </p>
-                  </div>
-                  <span
-                    className="flex-shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{
-                      backgroundColor: `${STATUS_COLOR[lead.status]}20`,
-                      color: STATUS_COLOR[lead.status],
-                    }}
-                  >
-                    {STATUS_LABEL[lead.status]}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                  {STATUS_LABEL[lead.status]}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <LeadDetailsDrawer
         lead={drawerLead}
@@ -255,7 +262,7 @@ export default function CalendarView({ leads: initialLeads }: Props) {
         selectedDate={selectedDate}
         onScheduled={() => {
           setIsNewScheduleOpen(false)
-          router.refresh()
+          void fetchScheduled()
         }}
       />
     </div>

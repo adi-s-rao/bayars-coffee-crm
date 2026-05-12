@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -29,22 +29,6 @@ interface Props {
 }
 
 export default function LeafletMap({ leads, onMarkerClick }: Props) {
-  useEffect(() => {
-    const style = document.createElement('style')
-    style.id = 'leaflet-dark-override'
-    style.textContent = `
-      .leaflet-container { background: #0A0A0A !important; }
-      .leaflet-tile { filter: brightness(0.45) contrast(1.2) saturate(0.5); }
-      .leaflet-control-zoom a { background: #1A1A1A !important; color: #A0A0A0 !important; border-color: #2A2A2A !important; }
-      .leaflet-control-zoom a:hover { background: #2A2A2A !important; color: #fff !important; }
-      .leaflet-control-attribution { background: rgba(10,10,10,0.7) !important; color: #555 !important; font-size: 10px; }
-      .leaflet-control-attribution a { color: #777 !important; }
-    `
-    document.head.appendChild(style)
-    return () => {
-      document.getElementById('leaflet-dark-override')?.remove()
-    }
-  }, [])
 
   const mappedLeads = useMemo(
     () => leads.filter(l => l.latitude != null && l.longitude != null),
@@ -57,11 +41,10 @@ export default function LeafletMap({ leads, onMarkerClick }: Props) {
       : [25.2048, 55.2708]
 
   return (
-    <MapContainer center={center} zoom={11} className="h-full w-full" zoomControl>
+    <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', background: '#e8e8e8' }} zoomControl>
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        subdomains="abcd"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         maxZoom={19}
       />
       {mappedLeads.map(lead => (
