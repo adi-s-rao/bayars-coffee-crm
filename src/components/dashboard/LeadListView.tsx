@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { Coffee, Phone, Plus, Search, User } from 'lucide-react'
 import { formatDistanceToNow, isToday, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -144,156 +144,237 @@ export default function LeadListView({ profile }: Props) {
   }
 
   return (
-    <div className="bg-black pb-[108px]">
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 px-4 py-4">
+    <div style={{ background: '#000', paddingBottom: '100px' }}>
+      {/* Stats row — horizontal scroll */}
+      <div
+        style={{ display: 'flex', gap: '10px', padding: '16px', overflowX: 'auto' }}
+        className="[&::-webkit-scrollbar]:hidden"
+      >
         {[
-          { value: String(leadsToday),  label: 'Leads Today' },
+          { value: String(leadsToday),   label: 'Leads Today' },
           { value: String(checkInCount), label: 'Check-ins' },
-          { value: totalKm.toFixed(1),  label: 'KM Today' },
+          { value: totalKm.toFixed(1),   label: 'KM Today' },
         ].map(({ value, label }) => (
           <div
             key={label}
-            className="rounded-2xl bg-[#1C1C1E] p-3.5"
+            style={{ minWidth: '110px', background: '#1C1C1E', borderRadius: '16px', padding: '14px', flexShrink: 0 }}
           >
-            <p className="text-[28px] font-bold leading-none tracking-tight text-[#D97706]">
+            <p style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.5px', color: '#D97706' }}>
               {value}
             </p>
-            <p className="mt-1.5 text-[12px] font-medium text-[#8E8E93]">{label}</p>
+            <p style={{ marginTop: '6px', fontSize: '12px', fontWeight: 500, color: 'rgba(235,235,245,0.45)' }}>{label}</p>
           </div>
         ))}
       </div>
 
       {/* Search bar */}
-      <div className="relative px-4 pb-3">
+      <div style={{ position: 'relative', padding: '0 16px 10px' }}>
         <Search
           size={15}
-          className="pointer-events-none absolute left-7 top-1/2 -translate-y-1/2 text-[#636366]"
+          style={{
+            position: 'absolute',
+            left: '28px',
+            top: '50%',
+            transform: 'translateY(-55%)',
+            color: 'rgba(235,235,245,0.35)',
+            pointerEvents: 'none',
+          }}
         />
         <input
           type="text"
           placeholder="Search cafes…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full rounded-xl bg-[#1C1C1E] py-3 pl-8 pr-3 text-[15px] text-white outline-none placeholder:text-[#636366] transition-colors"
+          className="placeholder:text-[rgba(235,235,245,0.35)]"
+          style={{
+            width: '100%',
+            height: '36px',
+            background: 'rgba(118,118,128,0.18)',
+            borderRadius: '10px',
+            border: 'none',
+            outline: 'none',
+            paddingLeft: '32px',
+            paddingRight: '12px',
+            fontSize: '17px',
+            color: '#FFF',
+            boxSizing: 'border-box',
+          }}
         />
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-3 [&::-webkit-scrollbar]:hidden">
+      <div
+        style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 16px 12px' }}
+        className="[&::-webkit-scrollbar]:hidden"
+      >
         {FILTER_PILLS.map(({ label, value }) => (
           <button
             key={value}
             type="button"
             onClick={() => setStatusFilter(value)}
-            className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all active:scale-[0.94] ${
-              statusFilter === value
-                ? 'bg-[#D97706] text-white'
-                : 'bg-[#1C1C1E] text-[#8E8E93] hover:text-white'
-            }`}
+            className="transition-all active:scale-[0.95]"
+            style={{
+              flexShrink: 0,
+              height: '32px',
+              borderRadius: '8px',
+              padding: '0 14px',
+              fontSize: '15px',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              background: statusFilter === value ? '#D97706' : 'rgba(118,118,128,0.2)',
+              color: statusFilter === value ? '#FFF' : 'rgba(235,235,245,0.6)',
+            }}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Lead cards */}
-      <div className="flex flex-col gap-3 px-4">
+      {/* Lead list */}
+      <div style={{ padding: '0 16px' }}>
         {isLoading ? (
-          <div className="flex flex-col gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[1, 2, 3].map(i => (
               <div
                 key={i}
-                className="h-[120px] animate-pulse rounded-2xl bg-[#1C1C1E]"
+                className="animate-pulse"
+                style={{ height: '120px', borderRadius: '16px', background: '#1C1C1E' }}
               />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center py-16 text-center">
-            <Coffee size={40} className="text-[#2C2C2E]" />
-            <p className="mt-3 text-[15px] font-medium text-[#636366]">No leads found</p>
-            <p className="mt-1 text-[13px] text-[#48484A]">Add your first lead to get started</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 0', textAlign: 'center' }}>
+            <Coffee size={40} style={{ color: '#2C2C2E' }} />
+            <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 500, color: '#636366' }}>No leads found</p>
+            <p style={{ marginTop: '4px', fontSize: '13px', color: '#48484A' }}>Add your first lead to get started</p>
           </div>
         ) : (
-          filtered.map(lead => {
-            const meta = STATUS_META[lead.status]
-            return (
-              <div
-                key={lead.id}
-                className="rounded-2xl border border-white/[0.06] bg-[#1C1C1E] p-4"
-              >
-                {/* Top row */}
-                <div
-                  className="flex cursor-pointer items-start gap-2.5"
-                  onClick={() => openDrawer(lead)}
-                >
-                  <span
-                    className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: meta.dot }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[17px] font-semibold leading-tight text-white">
-                      {lead.cafe_name}
-                    </p>
-                    {lead.location_address && (
-                      <p className="mt-0.5 overflow-hidden text-[13px] text-[#8E8E93]"
-                         style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {lead.location_address}
-                      </p>
-                    )}
-                  </div>
-                  <span
-                    className="flex-shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold"
-                    style={{ backgroundColor: meta.bg, color: meta.color }}
-                  >
-                    {meta.label}
-                  </span>
-                </div>
-
-                {/* Middle row */}
-                <div
-                  className="my-2.5 flex cursor-pointer items-center gap-2 text-[13px] text-[#8E8E93]"
-                  onClick={() => openDrawer(lead)}
-                >
-                  <User size={13} className="text-[#636366]" />
-                  <span>{lead.poc_name || '—'}</span>
-                  <span className="text-[#3A3A3C]">•</span>
-                  <Phone size={13} className="text-[#636366]" />
-                  <span>{lead.poc_contact || '—'}</span>
-                </div>
-
-                {/* Bottom row */}
-                <div className="flex items-center justify-between border-t border-white/[0.06] pt-2.5">
-                  <span className="rounded-lg bg-black/40 px-2 py-1 text-[11px] text-[#636366]">
-                    {lastVisitLabel(lead.updated_at)}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openCheckIn(lead)}
-                      className="rounded-lg bg-[#D97706] px-3 py-1.5 text-[12px] font-semibold text-white transition-all active:scale-[0.94] hover:bg-[#B45309]"
-                    >
-                      Check In
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openSchedule(lead)}
-                      className="rounded-lg border border-white/[0.08] px-3 py-1.5 text-[12px] font-medium text-[#8E8E93] transition-all hover:text-white"
-                    >
-                      Schedule
-                    </button>
-                    <button
-                      type="button"
+          <div style={{ background: '#1C1C1E', borderRadius: '16px', overflow: 'hidden' }}>
+            {filtered.map((lead, index) => {
+              const meta = STATUS_META[lead.status]
+              return (
+                <Fragment key={lead.id}>
+                  {index > 0 && (
+                    <div style={{ height: '0.5px', background: 'rgba(84,84,88,0.65)', margin: '0 16px' }} />
+                  )}
+                  <div style={{ padding: '14px 16px' }}>
+                    {/* Top row */}
+                    <div
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}
                       onClick={() => openDrawer(lead)}
-                      className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[#636366] transition-all hover:text-white"
                     >
-                      Edit
-                    </button>
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: meta.dot,
+                          flexShrink: 0,
+                          marginTop: '6px',
+                        }}
+                      />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={{ fontSize: '17px', fontWeight: 600, color: '#FFF', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {lead.cafe_name}
+                        </p>
+                        {lead.location_address && (
+                          <p style={{ marginTop: '2px', fontSize: '13px', color: 'rgba(235,235,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {lead.location_address}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          background: meta.bg,
+                          color: meta.color,
+                        }}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
+
+                    {/* Middle row */}
+                    <div
+                      style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                      onClick={() => openDrawer(lead)}
+                    >
+                      <User size={13} style={{ color: 'rgba(235,235,245,0.35)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{lead.poc_name || '—'}</span>
+                      <span style={{ color: 'rgba(84,84,88,0.9)' }}>·</span>
+                      <Phone size={13} style={{ color: 'rgba(235,235,245,0.35)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{lead.poc_contact || '—'}</span>
+                    </div>
+
+                    {/* Bottom row */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
+                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.35)' }}>
+                        {lastVisitLabel(lead.updated_at)}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => openCheckIn(lead)}
+                          className="transition-all active:scale-[0.95]"
+                          style={{
+                            background: '#D97706',
+                            borderRadius: '8px',
+                            padding: '7px 14px',
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            color: '#FFF',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Check In
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openSchedule(lead)}
+                          className="transition-all active:scale-[0.95]"
+                          style={{
+                            background: 'rgba(118,118,128,0.2)',
+                            borderRadius: '8px',
+                            padding: '7px 14px',
+                            fontSize: '15px',
+                            fontWeight: 500,
+                            color: 'rgba(235,235,245,0.7)',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Schedule
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDrawer(lead)}
+                          className="transition-all active:scale-[0.95]"
+                          style={{
+                            background: 'transparent',
+                            borderRadius: '8px',
+                            padding: '7px 10px',
+                            fontSize: '15px',
+                            fontWeight: 500,
+                            color: '#D97706',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          })
+                </Fragment>
+              )
+            })}
+          </div>
         )}
       </div>
 
@@ -301,13 +382,13 @@ export default function LeadListView({ profile }: Props) {
       <button
         type="button"
         onClick={() => setIsNewLeadOpen(true)}
-        className="fixed bottom-[88px] right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
+        className="fixed right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
+        style={{ bottom: '106px' }}
         aria-label="New lead"
       >
         <Plus size={22} className="text-white" />
       </button>
 
-      {/* Modals / Drawers */}
       <LeadDetailsDrawer
         lead={selectedLead}
         isOpen={isDrawerOpen}

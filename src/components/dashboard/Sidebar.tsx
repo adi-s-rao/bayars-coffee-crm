@@ -49,45 +49,83 @@ export default function Sidebar({ isOpen, onClose, profile, onSettingsOpen }: Pr
 
       {/* Panel */}
       <div
-        className={`fixed left-0 top-0 z-50 flex h-full w-[280px] flex-col border-r border-white/[0.08] bg-[#111] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        className={`fixed left-0 top-0 z-50 flex h-full flex-col transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{
+          width: '300px',
+          background: '#1C1C1E',
+          borderRight: '0.5px solid rgba(84,84,88,0.65)',
+        }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-white/[0.08] p-6">
-          <div>
-            <div className="mb-4 flex items-center gap-2">
-              <Coffee size={18} className="text-[#D97706]" />
-              <span className="text-[15px] font-bold text-white">Bayar&apos;s Coffee</span>
-              <span className="text-[12px] text-[#636366]">CRM</span>
+        <div
+          style={{
+            borderBottom: '0.5px solid rgba(84,84,88,0.65)',
+            padding: '24px 20px 20px',
+          }}
+        >
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Coffee size={18} style={{ color: '#D97706' }} />
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#FFF' }}>Bayar&apos;s Coffee</span>
+              <span style={{ fontSize: '12px', color: 'rgba(235,235,245,0.35)' }}>CRM</span>
             </div>
-            <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-amber-600/30 bg-amber-600/15">
-              <span className="text-[13px] font-semibold text-[#D97706]">
-                {getInitials(profile.full_name)}
-              </span>
-            </div>
-            <p className="text-[15px] font-semibold text-white">{profile.full_name}</p>
-            <div className="mt-1.5">
-              <span
-                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                style={{ backgroundColor: roleBg, color: roleColor }}
-              >
-                {roleLabel}
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="transition-colors active:scale-[0.92]"
+              style={{
+                background: 'rgba(118,118,128,0.15)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '7px',
+                color: 'rgba(235,235,245,0.6)',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={15} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+
+          {/* Avatar */}
+          <div
+            style={{
+              marginBottom: '10px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: 'rgba(217,119,6,0.15)',
+              border: '0.5px solid rgba(217,119,6,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <X size={15} />
-          </button>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#D97706' }}>
+              {getInitials(profile.full_name)}
+            </span>
+          </div>
+          <p style={{ fontSize: '15px', fontWeight: 600, color: '#FFF' }}>{profile.full_name}</p>
+          <div style={{ marginTop: '6px' }}>
+            <span
+              style={{
+                borderRadius: '20px',
+                padding: '3px 10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                background: roleBg,
+                color: roleColor,
+              }}
+            >
+              {roleLabel}
+            </span>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <div className="flex flex-col gap-1">
+        <nav style={{ flex: 1, padding: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {NAV_ITEMS.map(({ label, href, Icon }) => {
               const active = pathname === href
               return (
@@ -95,39 +133,68 @@ export default function Sidebar({ isOpen, onClose, profile, onSettingsOpen }: Pr
                   key={href}
                   href={href}
                   onClick={onClose}
-                  className={`flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-all active:scale-[0.97] ${
-                    active
-                      ? 'bg-white/[0.07] text-white'
-                      : 'text-[#8E8E93] hover:bg-white/[0.04] hover:text-white'
-                  }`}
+                  className="flex items-center gap-3 rounded-xl transition-all active:scale-[0.97]"
+                  style={{
+                    height: '52px',
+                    padding: '0 12px',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                    background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
+                    color: active ? '#FFF' : 'rgba(235,235,245,0.5)',
+                  }}
                 >
-                  <Icon size={18} color={active ? '#D97706' : undefined} />
+                  <Icon size={22} color={active ? '#D97706' : undefined} />
                   {label}
                 </Link>
               )
             })}
           </div>
 
-          <div className="my-3 border-t border-white/[0.08]" />
+          <div style={{ margin: '8px 0', borderTop: '0.5px solid rgba(84,84,88,0.65)' }} />
 
           <button
             type="button"
             onClick={() => { onSettingsOpen(); onClose() }}
-            className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-[#8E8E93] transition-all active:scale-[0.97] hover:bg-white/[0.04] hover:text-white"
+            className="flex items-center gap-3 rounded-xl transition-all active:scale-[0.97] hover:bg-white/[0.04]"
+            style={{
+              width: '100%',
+              height: '52px',
+              padding: '0 12px',
+              fontSize: '15px',
+              fontWeight: 500,
+              color: 'rgba(235,235,245,0.5)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
           >
-            <Settings size={18} />
+            <Settings size={22} />
             Settings
           </button>
         </nav>
 
         {/* Sign out */}
-        <div className="border-t border-white/[0.08] p-4">
+        <div style={{ borderTop: '0.5px solid rgba(84,84,88,0.65)', padding: '12px' }}>
           <button
             type="button"
             onClick={signOut}
-            className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-[#FF453A] transition-all active:scale-[0.97] hover:bg-red-500/10"
+            className="flex items-center gap-3 rounded-xl transition-all active:scale-[0.97] hover:bg-red-500/10"
+            style={{
+              width: '100%',
+              height: '52px',
+              padding: '0 12px',
+              fontSize: '15px',
+              fontWeight: 500,
+              color: '#FF453A',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
           >
-            <LogOut size={18} />
+            <LogOut size={22} />
             Sign Out
           </button>
         </div>

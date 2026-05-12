@@ -67,7 +67,6 @@ export default function DashboardShell({ profile, children }: Props) {
 
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Load persisted day state
   useEffect(() => {
     try {
       const stored = localStorage.getItem('bayars_day_state')
@@ -77,7 +76,6 @@ export default function DashboardShell({ profile, children }: Props) {
     }
   }, [])
 
-  // Close profile dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -173,9 +171,16 @@ export default function DashboardShell({ profile, children }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col bg-black">
-      {/* Top Navbar */}
-      <header className="relative sticky top-0 z-30 border-b border-white/[0.08] bg-black/85 px-4 py-3.5 backdrop-blur-xl">
-        {/* Page transition loading bar */}
+      {/* Top Navbar — Liquid Glass */}
+      <header
+        className="relative sticky top-0 z-30 px-4 py-3.5"
+        style={{
+          background: 'rgba(28,28,30,0.72)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderBottom: '0.5px solid rgba(255,255,255,0.08)',
+        }}
+      >
         {isPending && (
           <div className="absolute left-0 right-0 top-0 z-50 h-[2px] bg-[#D97706]" />
         )}
@@ -184,18 +189,18 @@ export default function DashboardShell({ profile, children }: Props) {
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="text-[#8E8E93] transition-colors hover:text-white active:scale-[0.92]"
+              className="transition-colors active:scale-[0.92]"
+              style={{ color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <Menu size={20} />
             </button>
-            <span className="text-[15px] font-semibold text-white">Bayar&apos;s CRM</span>
+            <span style={{ fontSize: '17px', fontWeight: 600, color: '#FFF' }}>Bayar&apos;s CRM</span>
           </div>
           <div className="flex items-center gap-3">
-            <button type="button" className="text-[#8E8E93] transition-colors hover:text-white">
+            <button type="button" style={{ color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <Bell size={20} />
             </button>
 
-            {/* Avatar + dropdown wrapper */}
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
@@ -207,20 +212,26 @@ export default function DashboardShell({ profile, children }: Props) {
                 </span>
               </button>
 
-              {/* Profile dropdown */}
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 top-10 z-[100] w-[220px] rounded-2xl border border-white/[0.08] bg-[#1C1C1E] py-1 shadow-2xl backdrop-blur-xl">
-                  {/* User info */}
-                  <div className="border-b border-white/[0.08] px-4 py-3">
-                    <p className="text-[13px] font-semibold text-white">{profile.full_name}</p>
-                    <p className="text-[11px] text-[#636366]">{profile.email}</p>
+                <div
+                  className="absolute right-0 top-10 z-[100] w-[220px] rounded-2xl py-1 shadow-2xl"
+                  style={{
+                    background: 'rgba(28,28,30,0.95)',
+                    backdropFilter: 'blur(40px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                    border: '0.5px solid rgba(255,255,255,0.12)',
+                  }}
+                >
+                  <div style={{ borderBottom: '0.5px solid rgba(84,84,88,0.65)', padding: '12px 16px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#FFF' }}>{profile.full_name}</p>
+                    <p style={{ fontSize: '11px', color: 'rgba(235,235,245,0.45)' }}>{profile.email}</p>
                   </div>
-                  {/* Menu items */}
                   <div className="px-2 py-1">
                     <button
                       type="button"
                       onClick={() => { setIsSettingsOpen(true); setIsProfileDropdownOpen(false) }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-[#8E8E93] transition-colors hover:bg-white/[0.07] hover:text-white"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
+                      style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer' }}
                     >
                       <Settings size={14} />
                       Settings
@@ -228,16 +239,18 @@ export default function DashboardShell({ profile, children }: Props) {
                     <button
                       type="button"
                       onClick={() => { void signOut(); setIsProfileDropdownOpen(false) }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-[#8E8E93] transition-colors hover:bg-white/[0.07] hover:text-white"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
+                      style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer' }}
                     >
                       <RefreshCw size={14} />
                       Switch User
                     </button>
-                    <div className="my-1 border-t border-white/[0.08]" />
+                    <div style={{ margin: '4px 0', borderTop: '0.5px solid rgba(84,84,88,0.65)' }} />
                     <button
                       type="button"
                       onClick={signOut}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-red-400 transition-colors hover:bg-white/[0.07]"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
+                      style={{ fontSize: '13px', color: '#FF453A', background: 'none', border: 'none', cursor: 'pointer' }}
                     >
                       <LogOut size={14} />
                       Sign Out
@@ -252,64 +265,122 @@ export default function DashboardShell({ profile, children }: Props) {
 
       {/* Day Status Bar */}
       <div
-        className={`border-b border-white/[0.08] bg-black/85 px-4 py-2.5 backdrop-blur-xl border-l-2 ${
-          dayState?.started ? 'border-l-[#30D158]' : 'border-l-[#3A3A3C]'
-        }`}
+        style={{
+          background: 'rgba(28,28,30,0.72)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderBottom: '0.5px solid rgba(84,84,88,0.65)',
+          height: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          flexShrink: 0,
+        }}
       >
-        <div className="flex items-center justify-between">
-          {dayState?.started ? (
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#30D158] opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#30D158]" />
-              </span>
-              <span className="text-[13px] font-medium text-[#E5E5E7]">Day Started</span>
-              <span className="text-[#3A3A3C]">•</span>
-              <span className="text-[13px] text-[#8E8E93]">
-                {format(new Date(dayState.startTime), 'h:mm a')}
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#3A3A3C]" />
-              <span className="text-[13px] text-[#8E8E93]">Day not started</span>
-            </div>
-          )}
-          <div>
-            {dayState?.started ? (
-              <button
-                type="button"
-                onClick={handleEndDay}
-                disabled={dayLoading}
-                className="flex items-center gap-1.5 rounded-lg border border-red-500/40 px-3 py-1 text-[12px] font-medium text-[#FF453A] transition-all active:scale-[0.96] hover:bg-red-500/10 disabled:opacity-50"
-              >
-                {dayLoading && <Loader2 size={11} className="animate-spin" />}
-                End Day
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleStartDay}
-                disabled={dayLoading}
-                className="flex items-center gap-1.5 rounded-lg bg-[#30D158] px-3 py-1 text-[12px] font-medium text-white transition-all active:scale-[0.96] hover:bg-green-500 disabled:opacity-50"
-              >
-                {dayLoading && <Loader2 size={11} className="animate-spin" />}
-                Start Day
-              </button>
-            )}
+        {dayState?.started ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#30D158',
+                boxShadow: '0 0 0 3px rgba(48,209,88,0.2)',
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#E5E5E7' }}>Day Started</span>
+            <span style={{ color: 'rgba(84,84,88,0.9)' }}>·</span>
+            <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.45)' }}>
+              {format(new Date(dayState.startTime), 'h:mm a')}
+            </span>
           </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: 'rgba(84,84,88,0.9)',
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.45)' }}>Day not started</span>
+          </div>
+        )}
+        <div>
+          {dayState?.started ? (
+            <button
+              type="button"
+              onClick={handleEndDay}
+              disabled={dayLoading}
+              className="flex items-center gap-1.5 transition-all active:scale-[0.95]"
+              style={{
+                background: 'rgba(255,69,58,0.12)',
+                border: '0.5px solid rgba(255,69,58,0.3)',
+                borderRadius: '20px',
+                padding: '6px 16px',
+                color: '#FF453A',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                opacity: dayLoading ? 0.5 : 1,
+              }}
+            >
+              {dayLoading && <Loader2 size={11} className="animate-spin" />}
+              End Day
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartDay}
+              disabled={dayLoading}
+              className="flex items-center gap-1.5 transition-all active:scale-[0.95]"
+              style={{
+                background: 'rgba(48,209,88,0.15)',
+                border: '0.5px solid rgba(48,209,88,0.3)',
+                borderRadius: '20px',
+                padding: '6px 16px',
+                color: '#30D158',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                opacity: dayLoading ? 0.5 : 1,
+              }}
+            >
+              {dayLoading && <Loader2 size={11} className="animate-spin" />}
+              Start Day
+            </button>
+          )}
         </div>
       </div>
 
       {/* Main content */}
       <main className="flex-1">{children}</main>
 
-      {/* Bottom Tab Bar — z-[1000] ensures it appears above Leaflet map layers */}
+      {/* Floating Pill Tab Bar */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[1000] border-t border-white/[0.08] bg-black/85 backdrop-blur-xl"
-        style={{ height: '80px' }}
+        className="fixed bottom-0 left-0 right-0 z-[1000]"
+        style={{ padding: '0 21px 21px', pointerEvents: 'none' }}
       >
-        <div className="flex h-full items-center justify-around px-4">
+        <div
+          style={{
+            display: 'flex',
+            height: '64px',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            padding: '0 8px',
+            background: 'rgba(28,28,30,0.82)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '0.5px solid rgba(255,255,255,0.12)',
+            borderRadius: '24px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            pointerEvents: 'auto',
+          }}
+        >
           {NAV_ITEMS.map(({ label, href, Icon }) => {
             const active = pathname === href
             return (
@@ -324,11 +395,15 @@ export default function DashboardShell({ profile, children }: Props) {
                   }
                 }}
                 className="flex min-w-[56px] flex-col items-center gap-[3px] py-2 transition-all active:scale-[0.88]"
+                style={{ textDecoration: 'none' }}
               >
-                <Icon size={24} color={active ? '#D97706' : '#636366'} />
+                <Icon size={24} color={active ? '#D97706' : 'rgba(235,235,245,0.45)'} />
                 <span
-                  className="text-[10px] font-medium"
-                  style={{ color: active ? '#D97706' : '#636366' }}
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 400,
+                    color: active ? '#D97706' : 'rgba(235,235,245,0.45)',
+                  }}
                 >
                   {label}
                 </span>
@@ -338,7 +413,6 @@ export default function DashboardShell({ profile, children }: Props) {
         </div>
       </nav>
 
-      {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -346,7 +420,6 @@ export default function DashboardShell({ profile, children }: Props) {
         onSettingsOpen={() => setIsSettingsOpen(true)}
       />
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

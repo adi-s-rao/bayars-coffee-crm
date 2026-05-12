@@ -22,9 +22,28 @@ const STATUSES: { value: LeadStatus; label: string }[] = [
 
 const POC_REGEX = /^\+?[0-9]{10,15}$/
 
-const inputClass =
-  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
-const labelClass = 'mb-1.5 block text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(118,118,128,0.12)',
+  borderRadius: '10px',
+  border: 'none',
+  padding: '12px 14px',
+  fontSize: '15px',
+  color: '#FFF',
+  outline: 'none',
+  boxSizing: 'border-box',
+  colorScheme: 'dark',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: '6px',
+  fontSize: '13px',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  color: 'rgba(235,235,245,0.4)',
+}
 
 export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
   const [cafeName, setCafeName] = useState('')
@@ -113,7 +132,6 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
       const { lead } = await res.json() as { lead: Lead }
       window.dispatchEvent(new Event('lead-created'))
       onCreated(lead)
-      // Reset form
       setCafeName(''); setStatus('cold_lead'); setLocation(null); setAddress('')
       setPocName(''); setPocContact(''); setRemarks('')
     } catch {
@@ -127,47 +145,57 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="relative z-10 max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-[#1C1C1E] p-6 md:mx-4 md:max-w-md md:rounded-3xl">
-        {/* Drag handle — mobile only */}
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+      <div
+        className="relative z-10 w-full overflow-y-auto md:mx-4 md:max-w-md md:rounded-3xl"
+        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '92vh' }}
+      >
+        {/* Drag handle */}
+        <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-[20px] font-semibold text-white">New Lead</h2>
+        <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>New Lead</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+            className="transition-colors active:scale-[0.92]"
+            style={{
+              background: 'rgba(118,118,128,0.15)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px',
+              color: 'rgba(235,235,245,0.6)',
+              cursor: 'pointer',
+            }}
           >
             <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Cafe Name */}
           <div>
-            <label className={labelClass}>Cafe Name *</label>
+            <label style={labelStyle}>Cafe Name *</label>
             <input
               type="text"
               placeholder="Blue Tokai, Third Wave…"
               value={cafeName}
               onChange={e => setCafeName(e.target.value)}
               required
-              className={inputClass}
+              style={inputStyle}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
           </div>
 
           {/* Status */}
           <div>
-            <label className={labelClass}>Status *</label>
+            <label style={labelStyle}>Status *</label>
             <select
               value={status}
               onChange={e => setStatus(e.target.value as LeadStatus)}
-              className={`${inputClass} cursor-pointer`}
+              style={{ ...inputStyle, cursor: 'pointer' }}
             >
               {STATUSES.map(s => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -177,18 +205,40 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
 
           {/* GPS + Address */}
           <div>
-            <label className={labelClass}>Location *</label>
+            <label style={labelStyle}>Location *</label>
             {location ? (
-              <div className="mb-3 flex items-center gap-2 rounded-xl bg-[#30D158]/10 px-3.5 py-3">
-                <MapPin size={13} className="text-[#30D158]" />
-                <span className="text-[13px] text-[#30D158]">GPS captured</span>
+              <div
+                style={{
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(48,209,88,0.1)',
+                  borderRadius: '10px',
+                  padding: '14px',
+                }}
+              >
+                <MapPin size={13} style={{ color: '#30D158' }} />
+                <span style={{ fontSize: '13px', color: '#30D158' }}>GPS captured</span>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={captureLocation}
                 disabled={gpsLoading}
-                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white/[0.07] py-3 text-[14px] text-[#8E8E93] transition-all active:scale-[0.98] hover:text-white disabled:opacity-50"
+                className="flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                style={{
+                  width: '100%',
+                  height: '50px',
+                  marginBottom: '12px',
+                  background: 'rgba(118,118,128,0.15)',
+                  border: '0.5px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  color: 'rgba(235,235,245,0.6)',
+                  cursor: 'pointer',
+                  opacity: gpsLoading ? 0.5 : 1,
+                }}
               >
                 {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
                 {gpsLoading ? 'Getting location…' : 'Capture Location'}
@@ -200,53 +250,72 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
                 placeholder="Address (auto-filled, edit if needed)"
                 value={address}
                 onChange={e => setAddress(e.target.value)}
-                className={inputClass}
+                style={inputStyle}
+                className="placeholder:text-[rgba(235,235,245,0.3)]"
               />
             )}
           </div>
 
           {/* POC Name */}
           <div>
-            <label className={labelClass}>POC Name</label>
+            <label style={labelStyle}>POC Name</label>
             <input
               type="text"
               placeholder="Contact person's name"
               value={pocName}
               onChange={e => setPocName(e.target.value)}
-              className={inputClass}
+              style={inputStyle}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
           </div>
 
           {/* POC Contact */}
           <div>
-            <label className={labelClass}>POC Contact</label>
+            <label style={labelStyle}>POC Contact</label>
             <input
               type="tel"
               placeholder="+91 XXXXX XXXXX"
               value={pocContact}
               onChange={e => { setPocContact(e.target.value); setPocError('') }}
               onBlur={handleContactBlur}
-              className={`${inputClass} ${pocError ? 'ring-1 ring-[#FF453A]' : ''}`}
+              style={{
+                ...inputStyle,
+                ...(pocError ? { boxShadow: '0 0 0 1px #FF453A' } : {}),
+              }}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
-            {pocError && <p className="mt-1.5 text-[12px] text-[#FF453A]">{pocError}</p>}
+            {pocError && <p style={{ marginTop: '6px', fontSize: '12px', color: '#FF453A' }}>{pocError}</p>}
           </div>
 
           {/* Remarks */}
           <div>
-            <label className={labelClass}>Remarks</label>
+            <label style={labelStyle}>Remarks</label>
             <textarea
               rows={2}
               placeholder="Any notes…"
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
-              className={`${inputClass} resize-none`}
+              style={{ ...inputStyle, resize: 'none' }}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
           </div>
 
           <button
             type="submit"
             disabled={!canSubmit || submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+            style={{
+              width: '100%',
+              height: '54px',
+              borderRadius: '14px',
+              background: '#D97706',
+              color: '#FFF',
+              fontSize: '17px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: !canSubmit || submitting ? 'not-allowed' : 'pointer',
+              opacity: !canSubmit || submitting ? 0.5 : 1,
+            }}
           >
             {submitting && <Loader2 size={18} className="animate-spin" />}
             {submitting ? 'Adding…' : 'Add Lead'}

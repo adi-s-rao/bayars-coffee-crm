@@ -35,8 +35,32 @@ type DrawerTab = 'overview' | 'coffee' | 'activity'
 type EditableField = 'coffee_machine' | 'current_bean_brand' | 'quoted_bean_name'
 type NumericField = 'bean_usage_kg' | 'bean_price_per_kg' | 'cappuccino_price' | 'quoted_price'
 
-const inputClass =
-  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
+const fieldRowStyle = (isLast: boolean): React.CSSProperties => ({
+  padding: '14px 16px',
+  borderBottom: isLast ? 'none' : '0.5px solid rgba(84,84,88,0.65)',
+})
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '12px',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: 'rgba(235,235,245,0.45)',
+  marginBottom: '4px',
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(118,118,128,0.12)',
+  borderRadius: '10px',
+  border: 'none',
+  padding: '10px 14px',
+  fontSize: '15px',
+  color: '#FFF',
+  outline: 'none',
+  boxSizing: 'border-box',
+  colorScheme: 'dark',
+}
 
 export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onDelete, refreshTrigger }: Props) {
   const [activeTab, setActiveTab] = useState<DrawerTab>('overview')
@@ -52,7 +76,6 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
   const [checkins, setCheckins] = useState<CheckIn[]>([])
   const [checkinsLoading, setCheckinsLoading] = useState(false)
 
-  // Sync localLead when lead prop changes
   useEffect(() => {
     if (lead) setLocalLead(lead)
   }, [lead])
@@ -63,7 +86,6 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     return () => document.removeEventListener('keydown', handleEsc)
   }, [isOpen, onClose])
 
-  // Measure tab underline
   useEffect(() => {
     const refs: Record<DrawerTab, React.RefObject<HTMLButtonElement | null>> = {
       overview: overviewRef,
@@ -76,7 +98,6 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     }
   }, [activeTab])
 
-  // Load checkins on drawer open or after a new checkin (refreshTrigger)
   useEffect(() => {
     if (!lead?.id) return
     setCheckinsLoading(true)
@@ -140,26 +161,25 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
 
   const statusMeta = STATUS_META[localLead.status]
 
-  // Helper: editable text row
-  function EditableText({ field, label, value }: { field: EditableField; label: string; value: string | undefined }) {
+  function EditableRow({ field, label, value, isLast }: { field: EditableField; label: string; value: string | undefined; isLast?: boolean }) {
     return (
-      <div>
-        <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#636366]">{label}</p>
+      <div style={fieldRowStyle(!!isLast)}>
+        <p style={labelStyle}>{label}</p>
         {editingField === field ? (
           <input
             type="text"
             defaultValue={value ?? ''}
-            className={inputClass}
             autoFocus
             onBlur={e => {
               setLocalLead(prev => prev ? { ...prev, [field]: e.target.value || undefined } : prev)
               setEditingField(null)
             }}
+            style={inputStyle}
           />
         ) : (
           <p
-            className="cursor-pointer text-[17px] text-[#E5E5E7] hover:text-white"
             onClick={() => setEditingField(field)}
+            style={{ fontSize: '17px', color: '#FFF', cursor: 'pointer' }}
           >
             {value || '—'}
           </p>
@@ -168,27 +188,26 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     )
   }
 
-  // Helper: editable numeric row
-  function EditableNumber({ field, label, value }: { field: NumericField; label: string; value: number | undefined }) {
+  function EditableNumericRow({ field, label, value, isLast }: { field: NumericField; label: string; value: number | undefined; isLast?: boolean }) {
     return (
-      <div>
-        <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#636366]">{label}</p>
+      <div style={fieldRowStyle(!!isLast)}>
+        <p style={labelStyle}>{label}</p>
         {editingField === field ? (
           <input
             type="number"
             defaultValue={value ?? ''}
-            className={inputClass}
             autoFocus
             onBlur={e => {
               const n = parseFloat(e.target.value)
               setLocalLead(prev => prev ? { ...prev, [field]: isNaN(n) ? undefined : n } : prev)
               setEditingField(null)
             }}
+            style={inputStyle}
           />
         ) : (
           <p
-            className="cursor-pointer text-[17px] text-[#E5E5E7] hover:text-white"
             onClick={() => setEditingField(field)}
+            style={{ fontSize: '17px', color: '#FFF', cursor: 'pointer' }}
           >
             {value !== undefined ? value : '—'}
           </p>
@@ -199,7 +218,6 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
 
   return (
     <>
-      {/* Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
@@ -207,25 +225,32 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         />
       )}
 
-      {/* Drawer panel */}
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-[#111] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:w-[420px] md:border-l md:border-white/[0.08] ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:w-[420px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ background: '#1C1C1E', borderLeft: '0.5px solid rgba(84,84,88,0.65)' }}
       >
         {/* Header */}
-        <div className="border-b border-white/[0.08] p-5">
+        <div style={{ borderBottom: '0.5px solid rgba(84,84,88,0.65)', padding: '20px 20px 0' }}>
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[22px] font-bold leading-tight text-white">{localLead.cafe_name}</p>
+            <p style={{ fontSize: '22px', fontWeight: 700, color: '#FFF', lineHeight: 1.2 }}>{localLead.cafe_name}</p>
             <span
-              className="flex-shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold"
-              style={{ backgroundColor: statusMeta.bg, color: statusMeta.color }}
+              style={{
+                flexShrink: 0,
+                borderRadius: '8px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                background: statusMeta.bg,
+                color: statusMeta.color,
+              }}
             >
               {statusMeta.label}
             </span>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
+          <div style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             {localLead.latitude && localLead.longitude && (
               <button
                 type="button"
@@ -235,7 +260,17 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                     '_blank'
                   )
                 }
-                className="flex items-center gap-1.5 rounded-xl border border-amber-600/30 px-3 py-1.5 text-[13px] font-medium text-[#D97706] transition-all active:scale-[0.96] hover:bg-amber-600/10"
+                className="flex items-center gap-1.5 transition-all active:scale-[0.96]"
+                style={{
+                  background: 'rgba(217,119,6,0.12)',
+                  border: '0.5px solid rgba(217,119,6,0.3)',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: '#D97706',
+                  cursor: 'pointer',
+                }}
               >
                 <MapPin size={13} />
                 Navigate
@@ -244,14 +279,22 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             <button
               type="button"
               onClick={onClose}
-              className="ml-auto rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+              className="ml-auto transition-colors hover:text-white active:scale-[0.92]"
+              style={{
+                background: 'rgba(118,118,128,0.15)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px',
+                color: 'rgba(235,235,245,0.6)',
+                cursor: 'pointer',
+              }}
             >
               <X size={15} />
             </button>
           </div>
 
           {/* Tab bar */}
-          <div className="relative mt-4 flex gap-5 border-b border-white/[0.08]">
+          <div style={{ position: 'relative', display: 'flex', gap: '20px', borderBottom: '0.5px solid rgba(84,84,88,0.65)' }}>
             {([
               { key: 'overview' as DrawerTab, label: 'Overview',      ref: overviewRef  },
               { key: 'coffee'   as DrawerTab, label: 'Coffee Details', ref: coffeeRef    },
@@ -262,106 +305,120 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                 ref={ref}
                 type="button"
                 onClick={() => setActiveTab(key)}
-                className={`pb-3 text-[15px] font-medium transition-colors ${
-                  activeTab === key ? 'text-white' : 'text-[#636366]'
-                }`}
+                style={{
+                  paddingBottom: '12px',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  color: activeTab === key ? '#FFF' : 'rgba(235,235,245,0.4)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.15s ease',
+                }}
               >
                 {label}
               </button>
             ))}
             <div
-              className="absolute bottom-[-1px] h-0.5 rounded-sm bg-[#D97706] transition-all duration-200"
-              style={{ left: underline.left, width: underline.width }}
+              style={{
+                position: 'absolute',
+                bottom: '-0.5px',
+                height: '2px',
+                borderRadius: '1px',
+                background: '#D97706',
+                transition: 'all 200ms ease',
+                left: underline.left,
+                width: underline.width,
+              }}
             />
           </div>
         </div>
 
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto">
-          {/* ── Overview ── */}
+          {/* Overview */}
           {activeTab === 'overview' && (
-            <div className="flex flex-col gap-5 p-5">
-              <div className="flex items-start gap-2.5">
-                <MapPin size={15} className="mt-0.5 flex-shrink-0 text-[#636366]" />
-                <p className="text-[15px] text-[#E5E5E7]">
-                  {localLead.location_address || 'No address'}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 text-[15px]">
-                <span className="text-[#8E8E93]">{localLead.poc_name || '—'}</span>
-                {localLead.poc_contact && (
-                  <a
-                    href={`tel:${localLead.poc_contact}`}
-                    className="text-[#D97706] transition-colors hover:text-[#B45309]"
+            <div style={{ padding: '16px' }}>
+              <div style={{ background: 'rgba(118,118,128,0.08)', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+                {/* Address */}
+                <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <MapPin size={15} style={{ marginTop: '2px', flexShrink: 0, color: 'rgba(235,235,245,0.35)' }} />
+                  <p style={{ fontSize: '15px', color: 'rgba(235,235,245,0.7)' }}>
+                    {localLead.location_address || 'No address'}
+                  </p>
+                </div>
+                {/* POC */}
+                <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '15px', color: 'rgba(235,235,245,0.7)' }}>{localLead.poc_name || '—'}</span>
+                  {localLead.poc_contact && (
+                    <a
+                      href={`tel:${localLead.poc_contact}`}
+                      style={{ fontSize: '15px', color: '#D97706', textDecoration: 'none' }}
+                    >
+                      {localLead.poc_contact}
+                    </a>
+                  )}
+                </div>
+                {/* Status */}
+                <div style={fieldRowStyle(false)}>
+                  <p style={labelStyle}>Status</p>
+                  <select
+                    value={localLead.status}
+                    onChange={e =>
+                      setLocalLead(prev => prev ? { ...prev, status: e.target.value as LeadStatus } : prev)
+                    }
+                    style={{ ...inputStyle, cursor: 'pointer' }}
                   >
-                    {localLead.poc_contact}
-                  </a>
-                )}
+                    <option value="cold_lead">Cold Lead</option>
+                    <option value="hot_lead">Hot Lead</option>
+                    <option value="demo_scheduled">Demo Scheduled</option>
+                    <option value="customer">Customer</option>
+                    <option value="competitor">Competitor</option>
+                  </select>
+                </div>
+                {/* Remarks */}
+                <div style={fieldRowStyle(true)}>
+                  <p style={labelStyle}>Remarks</p>
+                  <textarea
+                    rows={3}
+                    value={localLead.remarks ?? ''}
+                    onChange={e =>
+                      setLocalLead(prev => prev ? { ...prev, remarks: e.target.value || undefined } : prev)
+                    }
+                    placeholder="Add notes…"
+                    style={{ ...inputStyle, resize: 'none' }}
+                    className="placeholder:text-[rgba(235,235,245,0.3)]"
+                  />
+                </div>
               </div>
-
-              {/* Status */}
-              <div>
-                <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#636366]">Status</p>
-                <select
-                  value={localLead.status}
-                  onChange={e =>
-                    setLocalLead(prev => prev ? { ...prev, status: e.target.value as LeadStatus } : prev)
-                  }
-                  className={`${inputClass} cursor-pointer`}
-                >
-                  <option value="cold_lead">Cold Lead</option>
-                  <option value="hot_lead">Hot Lead</option>
-                  <option value="demo_scheduled">Demo Scheduled</option>
-                  <option value="customer">Customer</option>
-                  <option value="competitor">Competitor</option>
-                </select>
-              </div>
-
-              {/* Remarks */}
-              <div>
-                <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#636366]">Remarks</p>
-                <textarea
-                  rows={3}
-                  value={localLead.remarks ?? ''}
-                  onChange={e =>
-                    setLocalLead(prev => prev ? { ...prev, remarks: e.target.value || undefined } : prev)
-                  }
-                  className={`${inputClass} resize-none`}
-                  placeholder="Add notes…"
-                />
-              </div>
-
-              <p className="text-[12px] text-[#636366]">
+              <p style={{ fontSize: '12px', color: 'rgba(235,235,245,0.35)' }}>
                 Updated {formatDistanceToNow(new Date(localLead.updated_at), { addSuffix: true })}
               </p>
             </div>
           )}
 
-          {/* ── Coffee Details ── */}
+          {/* Coffee Details */}
           {activeTab === 'coffee' && (
-            <div className="flex flex-col gap-4 p-5">
-              <EditableText field="coffee_machine"     label="Coffee Machine"     value={localLead.coffee_machine} />
-              <EditableText field="current_bean_brand" label="Current Bean Brand" value={localLead.current_bean_brand} />
-
-              <div className="grid grid-cols-2 gap-4">
-                <EditableNumber field="bean_usage_kg"     label="Bean Usage (kg)"  value={localLead.bean_usage_kg} />
-                <EditableNumber field="bean_price_per_kg" label="Bean Price / kg"  value={localLead.bean_price_per_kg} />
-                <EditableNumber field="cappuccino_price"  label="Cappuccino Price" value={localLead.cappuccino_price} />
-                <EditableNumber field="quoted_price"      label="Quoted Price"     value={localLead.quoted_price} />
+            <div style={{ padding: '16px' }}>
+              <div style={{ background: 'rgba(118,118,128,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
+                <EditableRow    field="coffee_machine"     label="Coffee Machine"     value={localLead.coffee_machine} />
+                <EditableRow    field="current_bean_brand" label="Current Bean Brand" value={localLead.current_bean_brand} />
+                <EditableNumericRow field="bean_usage_kg"     label="Bean Usage (kg)"  value={localLead.bean_usage_kg} />
+                <EditableNumericRow field="bean_price_per_kg" label="Bean Price / kg"  value={localLead.bean_price_per_kg} />
+                <EditableNumericRow field="cappuccino_price"  label="Cappuccino Price" value={localLead.cappuccino_price} />
+                <EditableNumericRow field="quoted_price"      label="Quoted Price"     value={localLead.quoted_price} />
+                <EditableRow    field="quoted_bean_name" label="Quoted Bean" value={localLead.quoted_bean_name} isLast />
               </div>
-
-              <EditableText field="quoted_bean_name" label="Quoted Bean" value={localLead.quoted_bean_name} />
             </div>
           )}
 
-          {/* ── Activity ── */}
+          {/* Activity */}
           {activeTab === 'activity' && (
-            <div className="p-5">
+            <div style={{ padding: '20px' }}>
               {checkinsLoading ? (
-                <p className="text-[14px] text-[#636366]">Loading…</p>
+                <p style={{ fontSize: '14px', color: 'rgba(235,235,245,0.4)' }}>Loading…</p>
               ) : checkins.length === 0 ? (
-                <p className="text-[14px] text-[#636366]">No check-ins yet for this lead.</p>
+                <p style={{ fontSize: '14px', color: 'rgba(235,235,245,0.4)' }}>No check-ins yet for this lead.</p>
               ) : (
                 <div className="relative pl-5">
                   <div className="absolute bottom-2 left-[6px] top-2 w-px bg-white/[0.08]" />
@@ -371,21 +428,25 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                         className="absolute -left-[18px] top-0.5 h-2 w-2 rounded-full"
                         style={{ backgroundColor: CHECKIN_TYPE_COLOR[c.type] }}
                       />
-                      <p className="text-[12px] text-[#636366]">
+                      <p style={{ fontSize: '12px', color: 'rgba(235,235,245,0.35)' }}>
                         {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })} · {c.user_name}
                       </p>
                       <div className="mt-1 flex items-center gap-1.5">
                         <span
-                          className="rounded-lg px-1.5 py-0.5 text-[11px] font-semibold capitalize"
                           style={{
-                            backgroundColor: `${CHECKIN_TYPE_COLOR[c.type]}20`,
+                            borderRadius: '6px',
+                            padding: '2px 6px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            textTransform: 'capitalize',
+                            background: `${CHECKIN_TYPE_COLOR[c.type]}20`,
                             color: CHECKIN_TYPE_COLOR[c.type],
                           }}
                         >
                           {c.type.replace('_', ' ')}
                         </span>
                         {c.remarks && (
-                          <span className="text-[13px] text-[#8E8E93]">{c.remarks}</span>
+                          <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{c.remarks}</span>
                         )}
                       </div>
                     </div>
@@ -397,12 +458,25 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         </div>
 
         {/* Footer */}
-        <div className="border-t border-white/[0.08] p-5">
+        <div>
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:opacity-50"
+            className="flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            style={{
+              height: '50px',
+              borderRadius: '14px',
+              width: 'calc(100% - 40px)',
+              margin: '16px 20px 0',
+              background: '#D97706',
+              color: '#FFF',
+              fontSize: '17px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              opacity: saving ? 0.5 : 1,
+            }}
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
@@ -410,7 +484,17 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className="mt-3 w-full text-center text-[14px] text-[#FF453A] transition-colors hover:text-red-300 disabled:opacity-50"
+            style={{
+              width: '100%',
+              textAlign: 'center',
+              fontSize: '17px',
+              color: '#FF453A',
+              background: 'transparent',
+              border: 'none',
+              padding: '12px 20px 20px',
+              cursor: 'pointer',
+              opacity: deleting ? 0.5 : 1,
+            }}
           >
             {deleting ? 'Deleting…' : 'Delete Lead'}
           </button>
@@ -419,3 +503,4 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     </>
   )
 }
+

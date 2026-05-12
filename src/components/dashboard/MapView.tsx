@@ -71,17 +71,16 @@ export default function MapView({ leads, profile }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 160px)' }}>
-      {/* Filter pills — dedicated row with solid background */}
+      {/* Filter pills */}
       <div
         style={{
           background: '#000',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '0.5px solid rgba(84,84,88,0.65)',
           padding: '10px 16px',
           display: 'flex',
           gap: '8px',
           overflowX: 'auto',
           flexShrink: 0,
-          WebkitOverflowScrolling: 'touch',
         }}
         className="[&::-webkit-scrollbar]:hidden"
       >
@@ -90,19 +89,20 @@ export default function MapView({ leads, profile }: Props) {
             key={f}
             type="button"
             onClick={() => setActiveFilter(f)}
+            className="transition-all active:scale-[0.95]"
             style={{
-              background: activeFilter === f ? '#D97706' : 'rgba(255,255,255,0.07)',
-              color: activeFilter === f ? '#FFF' : '#8E8E93',
+              background: activeFilter === f ? '#D97706' : 'rgba(118,118,128,0.2)',
+              color: activeFilter === f ? '#FFF' : 'rgba(235,235,245,0.6)',
               border: 'none',
-              borderRadius: '20px',
-              padding: '6px 14px',
-              fontSize: '13px',
+              borderRadius: '8px',
+              height: '32px',
+              padding: '0 14px',
+              fontSize: '15px',
               fontWeight: 500,
               fontFamily: 'inherit',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-              transition: 'all 0.15s',
             }}
           >
             {f}
@@ -117,18 +117,37 @@ export default function MapView({ leads, profile }: Props) {
           <button
             type="button"
             onClick={handleMyLocation}
-            className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-black/90 p-2.5 shadow-lg backdrop-blur-sm transition-all active:scale-[0.92] hover:bg-white/[0.10]"
+            className="flex items-center justify-center rounded-xl shadow-lg transition-all active:scale-[0.92]"
+            style={{
+              background: 'rgba(28,28,30,0.85)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '0.5px solid rgba(255,255,255,0.12)',
+              padding: '10px',
+            }}
             title="My location"
           >
-            <Crosshair size={16} className="text-[#D97706]" />
+            <Crosshair size={16} style={{ color: '#D97706' }} />
           </button>
         </div>
 
         {/* Pin count badge */}
         <div className="absolute right-3 top-14 z-[400]">
-          <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-black/90 px-2.5 py-1.5 shadow-lg backdrop-blur-sm">
-            <MapPin size={12} className="text-[#D97706]" />
-            <span className="text-[11px] font-medium text-[#8E8E93]">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(28,28,30,0.85)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '0.5px solid rgba(255,255,255,0.12)',
+              borderRadius: '10px',
+              padding: '6px 10px',
+            }}
+          >
+            <MapPin size={12} style={{ color: '#D97706' }} />
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'rgba(235,235,245,0.6)' }}>
               {mappedCount} pin{mappedCount !== 1 ? 's' : ''}
             </span>
           </div>
@@ -140,21 +159,40 @@ export default function MapView({ leads, profile }: Props) {
         {/* Bottom popup for selected lead */}
         {selectedLead && !isDrawerOpen && !isCheckInOpen && (
           <div className="absolute bottom-4 left-0 right-0 z-[400] px-3">
-            <div className="rounded-2xl border border-white/[0.08] bg-black/95 p-4 shadow-2xl backdrop-blur-xl transition-all">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+            <div
+              style={{
+                borderRadius: '16px',
+                background: 'rgba(28,28,30,0.95)',
+                backdropFilter: 'blur(40px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                border: '0.5px solid rgba(255,255,255,0.12)',
+                padding: '16px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span
-                      className="h-2 w-2 flex-shrink-0 rounded-full"
-                      style={{ backgroundColor: STATUS_META[selectedLead.status].dot }}
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        background: STATUS_META[selectedLead.status].dot,
+                      }}
                     />
-                    <p className="truncate text-[15px] font-semibold text-white">
+                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#FFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {selectedLead.cafe_name}
                     </p>
                     <span
-                      className="flex-shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-semibold"
                       style={{
-                        backgroundColor: STATUS_META[selectedLead.status].bg,
+                        flexShrink: 0,
+                        borderRadius: '6px',
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        background: STATUS_META[selectedLead.status].bg,
                         color: STATUS_META[selectedLead.status].color,
                       }}
                     >
@@ -162,7 +200,7 @@ export default function MapView({ leads, profile }: Props) {
                     </span>
                   </div>
                   {selectedLead.location_address && (
-                    <p className="mt-1 truncate text-[13px] text-[#8E8E93]">
+                    <p style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(235,235,245,0.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {selectedLead.location_address}
                     </p>
                   )}
@@ -170,23 +208,52 @@ export default function MapView({ leads, profile }: Props) {
                 <button
                   type="button"
                   onClick={() => setSelectedLead(null)}
-                  className="flex-shrink-0 rounded-xl bg-white/[0.07] p-1.5 text-[#8E8E93] transition-colors hover:text-white"
+                  className="transition-colors active:scale-[0.92]"
+                  style={{
+                    flexShrink: 0,
+                    background: 'rgba(118,118,128,0.2)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px',
+                    color: 'rgba(235,235,245,0.6)',
+                    cursor: 'pointer',
+                  }}
                 >
                   <X size={14} />
                 </button>
               </div>
-              <div className="mt-3 flex gap-2">
+              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setIsCheckInOpen(true)}
-                  className="flex-1 rounded-xl bg-[#D97706] py-2.5 text-[13px] font-semibold text-white transition-all active:scale-[0.96] hover:bg-[#B45309]"
+                  className="flex-1 transition-all active:scale-[0.96]"
+                  style={{
+                    borderRadius: '10px',
+                    background: '#D97706',
+                    padding: '10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#FFF',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   Check In
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(true)}
-                  className="flex-1 rounded-xl bg-white/[0.07] py-2.5 text-[13px] font-medium text-[#8E8E93] transition-all hover:text-white"
+                  className="flex-1 transition-all"
+                  style={{
+                    borderRadius: '10px',
+                    background: 'rgba(118,118,128,0.2)',
+                    padding: '10px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: 'rgba(235,235,245,0.7)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   View Details
                 </button>

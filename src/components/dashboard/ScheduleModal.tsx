@@ -19,8 +19,18 @@ const VISIT_TYPES: { value: CheckInType; label: string }[] = [
   { value: 'workshop', label: 'Workshop' },
 ]
 
-const inputClass =
-  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(118,118,128,0.12)',
+  borderRadius: '10px',
+  border: 'none',
+  padding: '12px 14px',
+  fontSize: '15px',
+  color: '#FFF',
+  outline: 'none',
+  boxSizing: 'border-box',
+  colorScheme: 'dark',
+}
 
 export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Props) {
   const [visitType, setVisitType] = useState<CheckInType>('visit')
@@ -58,7 +68,6 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
       })
       if (!res.ok) {
         const err = await res.json() as { error?: string }
-        console.error('Schedule error:', err)
         setError('Failed to schedule: ' + (err.error ?? 'unknown'))
         return
       }
@@ -75,93 +84,172 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="relative z-10 w-full rounded-t-3xl bg-[#1C1C1E] p-6 md:mx-4 md:max-w-md md:rounded-3xl">
-        {/* Drag handle — mobile only */}
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+      <div
+        className="relative z-10 w-full md:mx-4 md:max-w-md md:rounded-3xl"
+        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px' }}
+      >
+        {/* Drag handle */}
+        <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
-        <div className="mb-5 flex items-start justify-between">
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-[20px] font-semibold text-white">Schedule Visit</h2>
-            <p className="mt-0.5 text-[14px] text-[#8E8E93]">{lead.cafe_name}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Schedule Visit</h2>
+            <p style={{ marginTop: '2px', fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>{lead.cafe_name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+            className="transition-colors active:scale-[0.92]"
+            style={{
+              background: 'rgba(118,118,128,0.15)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px',
+              color: 'rgba(235,235,245,0.6)',
+              cursor: 'pointer',
+            }}
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Visit type selector */}
-        <div className="mb-5 flex gap-2">
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '8px' }}>
           {VISIT_TYPES.map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => setVisitType(value)}
-              className={`flex-1 rounded-xl py-2.5 text-[14px] font-medium capitalize transition-all active:scale-[0.96] ${
-                visitType === value
-                  ? 'bg-[#D97706] text-white'
-                  : 'bg-white/[0.07] text-[#8E8E93]'
-              }`}
+              className="flex-1 transition-all active:scale-[0.95]"
+              style={{
+                height: '44px',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                background: visitType === value ? '#D97706' : 'rgba(118,118,128,0.2)',
+                color: visitType === value ? '#FFF' : 'rgba(235,235,245,0.6)',
+              }}
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* Date */}
-        <div className="mb-3">
-          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Date *</p>
-          <input
-            type="date"
-            value={date}
-            min={today}
-            onChange={e => setDate(e.target.value)}
-            className={inputClass}
-            style={{ colorScheme: 'dark' }}
-          />
-        </div>
-
-        {/* Time */}
-        <div className="mb-3">
-          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Time</p>
-          <input
-            type="time"
-            value={time}
-            onChange={e => setTime(e.target.value)}
-            className={inputClass}
-            style={{ colorScheme: 'dark' }}
-          />
+        {/* Date/Time card */}
+        <div
+          style={{
+            background: 'rgba(118,118,128,0.12)',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            marginBottom: '16px',
+          }}
+        >
+          {/* Date row */}
+          <div
+            style={{
+              padding: '14px 16px',
+              borderBottom: '0.5px solid rgba(84,84,88,0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ fontSize: '17px', color: '#FFF' }}>Date</span>
+            <input
+              type="date"
+              value={date}
+              min={today}
+              onChange={e => setDate(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#D97706',
+                fontSize: '17px',
+                textAlign: 'right',
+                outline: 'none',
+                colorScheme: 'dark',
+                cursor: 'pointer',
+              }}
+            />
+          </div>
+          {/* Time row */}
+          <div
+            style={{
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ fontSize: '17px', color: '#FFF' }}>Time</span>
+            <input
+              type="time"
+              value={time}
+              onChange={e => setTime(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#D97706',
+                fontSize: '17px',
+                textAlign: 'right',
+                outline: 'none',
+                colorScheme: 'dark',
+                cursor: 'pointer',
+              }}
+            />
+          </div>
         </div>
 
         {/* Notes */}
-        <div className="mb-5">
-          <p className="mb-1.5 text-[12px] font-medium uppercase tracking-wide text-[#8E8E93]">Notes</p>
+        <div style={{ marginBottom: '20px' }}>
+          <p
+            style={{
+              marginBottom: '6px',
+              fontSize: '13px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: 'rgba(235,235,245,0.4)',
+            }}
+          >
+            Notes
+          </p>
           <textarea
             rows={2}
             placeholder="Add notes…"
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            className={`${inputClass} resize-none`}
+            style={{ ...inputStyle, resize: 'none' }}
+            className="placeholder:text-[rgba(235,235,245,0.3)]"
           />
         </div>
 
         {error && (
-          <p className="mb-3 text-[13px] text-[#FF453A]">{error}</p>
+          <p style={{ marginBottom: '12px', fontSize: '13px', color: '#FF453A' }}>{error}</p>
         )}
 
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!date || submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+          style={{
+            width: '100%',
+            height: '50px',
+            borderRadius: '14px',
+            background: '#D97706',
+            color: '#FFF',
+            fontSize: '17px',
+            fontWeight: 600,
+            border: 'none',
+            cursor: !date || submitting ? 'not-allowed' : 'pointer',
+            opacity: !date || submitting ? 0.5 : 1,
+          }}
         >
           {submitting && <Loader2 size={18} className="animate-spin" />}
           {submitting ? 'Scheduling…' : 'Confirm Schedule'}

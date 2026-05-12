@@ -38,8 +38,17 @@ function haversineMetres(
   return R * 2 * Math.asin(Math.sqrt(a))
 }
 
-const inputClass =
-  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(118,118,128,0.12)',
+  borderRadius: '10px',
+  border: 'none',
+  padding: '12px 14px',
+  fontSize: '15px',
+  color: '#FFF',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
 
 export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profile }: Props) {
   const [checkinType, setCheckinType] = useState<CheckInType>('visit')
@@ -139,23 +148,30 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="relative z-10 w-full rounded-t-3xl bg-[#1C1C1E] p-6 md:mx-4 md:max-w-md md:rounded-3xl">
-        {/* Drag handle — mobile only */}
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+      <div
+        className="relative z-10 w-full md:mx-4 md:max-w-md md:rounded-3xl"
+        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px' }}
+      >
+        {/* Drag handle */}
+        <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
-        <div className="mb-5 flex items-start justify-between">
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-[20px] font-semibold text-white">Check In</h2>
-            <div className="mt-1 flex items-center gap-2">
-              <p className="text-[14px] text-[#8E8E93]">{lead.cafe_name}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Check In</h2>
+            <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <p style={{ fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>{lead.cafe_name}</p>
               <span
-                className="rounded-lg px-1.5 py-0.5 text-[11px] font-semibold"
-                style={{ backgroundColor: statusMeta.bg, color: statusMeta.color }}
+                style={{
+                  borderRadius: '6px',
+                  padding: '2px 8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  background: statusMeta.bg,
+                  color: statusMeta.color,
+                }}
               >
                 {statusMeta.label}
               </span>
@@ -164,24 +180,39 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+            className="transition-colors active:scale-[0.92]"
+            style={{
+              background: 'rgba(118,118,128,0.15)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px',
+              color: 'rgba(235,235,245,0.6)',
+              cursor: 'pointer',
+            }}
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Type selector */}
-        <div className="mb-5 flex gap-2">
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '8px' }}>
           {CHECKIN_TYPES.map(t => (
             <button
               key={t}
               type="button"
               onClick={() => setCheckinType(t)}
-              className={`flex-1 rounded-xl py-2.5 text-[14px] font-medium capitalize transition-all active:scale-[0.96] ${
-                checkinType === t
-                  ? 'bg-[#D97706] text-white'
-                  : 'bg-white/[0.07] text-[#8E8E93]'
-              }`}
+              className="flex-1 transition-all active:scale-[0.95]"
+              style={{
+                height: '44px',
+                borderRadius: '10px',
+                fontSize: '15px',
+                fontWeight: 500,
+                textTransform: 'capitalize',
+                border: 'none',
+                cursor: 'pointer',
+                background: checkinType === t ? '#D97706' : 'rgba(118,118,128,0.2)',
+                color: checkinType === t ? '#FFF' : 'rgba(235,235,245,0.6)',
+              }}
             >
               {t}
             </button>
@@ -189,46 +220,73 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         </div>
 
         {/* GPS */}
-        <div className="mb-4">
+        <div style={{ marginBottom: '16px' }}>
           {location ? (
-            <div className="flex items-center gap-2 rounded-xl bg-[#30D158]/10 px-3.5 py-3">
-              <MapPin size={14} className="text-[#30D158]" />
-              <span className="flex-1 text-[13px] text-[#30D158]">Location captured</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(48,209,88,0.1)',
+                borderRadius: '10px',
+                padding: '14px',
+              }}
+            >
+              <MapPin size={14} style={{ color: '#30D158' }} />
+              <span style={{ flex: 1, fontSize: '13px', color: '#30D158' }}>Location captured</span>
             </div>
           ) : (
             <button
               type="button"
               onClick={captureLocation}
               disabled={gpsLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/[0.07] py-3 text-[14px] text-[#8E8E93] transition-all active:scale-[0.98] hover:text-white disabled:opacity-50"
+              className="flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              style={{
+                width: '100%',
+                height: '50px',
+                background: 'rgba(118,118,128,0.15)',
+                border: '0.5px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px',
+                fontSize: '15px',
+                color: 'rgba(235,235,245,0.6)',
+                cursor: 'pointer',
+                opacity: gpsLoading ? 0.5 : 1,
+              }}
             >
               {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
               {gpsLoading ? 'Getting location…' : 'Capture Location'}
             </button>
           )}
 
-          {/* GPS note (no lead GPS) */}
           {gpsNote && (
-            <p className="mt-1.5 text-[12px] text-[#636366]">{gpsNote}</p>
+            <p style={{ marginTop: '6px', fontSize: '12px', color: 'rgba(235,235,245,0.4)' }}>{gpsNote}</p>
           )}
 
-          {/* Geofence warning */}
           {geofenceWarning && (
-            <div className="mt-2 rounded-xl bg-[#FF453A]/10 p-3.5">
+            <div style={{ marginTop: '8px', background: 'rgba(255,69,58,0.1)', borderRadius: '10px', padding: '14px' }}>
               <div className="flex items-center gap-2">
-                <AlertTriangle size={14} className="flex-shrink-0 text-[#FF453A]" />
-                <span className="text-[13px] text-[#FF453A]">
+                <AlertTriangle size={14} style={{ flexShrink: 0, color: '#FF453A' }} />
+                <span style={{ fontSize: '13px', color: '#FF453A' }}>
                   You are {geofenceWarning.distance}m away from this location
                 </span>
               </div>
-              <p className="mt-1 text-[12px] text-[#636366]">
+              <p style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(235,235,245,0.4)' }}>
                 Check-in recorded but flagged for review
               </p>
-              <div className="mt-3 flex gap-2">
+              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={cancelGps}
-                  className="flex-1 rounded-xl bg-white/[0.07] py-2 text-[13px] text-[#8E8E93] transition-colors hover:text-white"
+                  style={{
+                    flex: 1,
+                    height: '40px',
+                    background: 'rgba(118,118,128,0.2)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '13px',
+                    color: 'rgba(235,235,245,0.6)',
+                    cursor: 'pointer',
+                  }}
                 >
                   Cancel
                 </button>
@@ -236,7 +294,17 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
                   type="button"
                   onClick={() => void handleSubmit(true)}
                   disabled={submitting}
-                  className="flex-1 rounded-xl bg-[#FF453A]/20 py-2 text-[13px] text-[#FF453A] transition-colors hover:bg-[#FF453A]/30 disabled:opacity-50"
+                  style={{
+                    flex: 1,
+                    height: '40px',
+                    background: 'rgba(255,69,58,0.2)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '13px',
+                    color: '#FF453A',
+                    cursor: 'pointer',
+                    opacity: submitting ? 0.5 : 1,
+                  }}
                 >
                   {submitting ? 'Submitting…' : 'Check In Anyway'}
                 </button>
@@ -246,58 +314,79 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         </div>
 
         {/* Remarks */}
-        <div className="mb-3">
+        <div style={{ marginBottom: '12px' }}>
           <textarea
             rows={2}
             placeholder="Add notes…"
             value={remarks}
             onChange={e => setRemarks(e.target.value)}
-            className={`${inputClass} resize-none`}
+            style={{ ...inputStyle, resize: 'none' }}
+            className="placeholder:text-[rgba(235,235,245,0.3)]"
           />
         </div>
 
         {/* Gate pass */}
-        <div className="mb-4">
+        <div style={{ marginBottom: '16px' }}>
           <input
             type="text"
             placeholder="Gate pass number (optional)"
             value={gatePass}
             onChange={e => setGatePass(e.target.value)}
-            className={inputClass}
+            style={inputStyle}
+            className="placeholder:text-[rgba(235,235,245,0.3)]"
           />
         </div>
 
         {/* Beans toggle */}
-        <div className="mb-5">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-[15px] text-[#8E8E93]">Beans used?</span>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>Beans used?</span>
             <button
               type="button"
               onClick={() => setBeansUsed(v => !v)}
-              className={`relative h-[28px] w-[50px] rounded-full transition-colors ${beansUsed ? 'bg-[#D97706]' : 'bg-[#3A3A3C]'}`}
+              style={{
+                position: 'relative',
+                width: '50px',
+                height: '28px',
+                borderRadius: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                background: beansUsed ? '#D97706' : 'rgba(118,118,128,0.4)',
+                transition: 'background 0.2s ease',
+              }}
             >
               <span
-                className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ${
-                  beansUsed ? 'left-[25px]' : 'left-[3px]'
-                }`}
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: beansUsed ? '25px' : '3px',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: '#FFF',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  transition: 'left 0.2s ease',
+                }}
               />
             </button>
           </div>
           {beansUsed && (
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="Bean brand"
                 value={beanBrand}
                 onChange={e => setBeanBrand(e.target.value)}
-                className={`${inputClass} flex-1`}
+                style={{ ...inputStyle, flex: 1 }}
+                className="placeholder:text-[rgba(235,235,245,0.3)]"
               />
               <input
                 type="number"
                 placeholder="kg"
                 value={beanAmount}
                 onChange={e => setBeanAmount(e.target.value)}
-                className={`${inputClass} w-20`}
+                style={{ ...inputStyle, width: '80px', flex: 'none' }}
+                className="placeholder:text-[rgba(235,235,245,0.3)]"
               />
             </div>
           )}
@@ -308,7 +397,19 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           type="button"
           onClick={() => void handleSubmit(false)}
           disabled={!location || submitting || geofenceWarning != null}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
+          style={{
+            width: '100%',
+            height: '50px',
+            borderRadius: '14px',
+            background: '#D97706',
+            color: '#FFF',
+            fontSize: '17px',
+            fontWeight: 600,
+            border: 'none',
+            cursor: !location || submitting || geofenceWarning != null ? 'not-allowed' : 'pointer',
+            opacity: !location || submitting || geofenceWarning != null ? 0.5 : 1,
+          }}
         >
           {submitting && <Loader2 size={18} className="animate-spin" />}
           {submitting ? 'Submitting…' : 'Submit Check-in'}

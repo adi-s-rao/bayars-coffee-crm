@@ -106,23 +106,25 @@ export default function CalendarView({ profile }: Props) {
   }
 
   return (
-    <div className="bg-black pb-[108px]">
+    <div style={{ background: '#000', paddingBottom: '100px' }}>
       {/* Month header */}
-      <div className="flex items-center justify-between px-4 py-4">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px' }}>
         <button
           type="button"
           onClick={() => setCurrentMonth(m => subMonths(m, 1))}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.07] text-[#8E8E93] transition-all active:scale-[0.92] hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-[0.92]"
+          style={{ background: 'rgba(118,118,128,0.2)', border: 'none', color: 'rgba(235,235,245,0.6)', cursor: 'pointer' }}
         >
           <ChevronLeft size={18} />
         </button>
-        <span className="text-[17px] font-semibold text-white">
+        <span style={{ fontSize: '17px', fontWeight: 600, color: '#FFF' }}>
           {format(currentMonth, 'MMMM yyyy')}
         </span>
         <button
           type="button"
           onClick={() => setCurrentMonth(m => addMonths(m, 1))}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.07] text-[#8E8E93] transition-all active:scale-[0.92] hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-[0.92]"
+          style={{ background: 'rgba(118,118,128,0.2)', border: 'none', color: 'rgba(235,235,245,0.6)', cursor: 'pointer' }}
         >
           <ChevronRight size={18} />
         </button>
@@ -131,7 +133,7 @@ export default function CalendarView({ profile }: Props) {
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 px-3 pb-1">
         {DAYS.map(d => (
-          <div key={d} className="py-1.5 text-center text-[12px] font-medium text-[#636366]">
+          <div key={d} style={{ padding: '6px 0', textAlign: 'center', fontSize: '12px', fontWeight: 500, color: 'rgba(235,235,245,0.35)' }}>
             {d}
           </div>
         ))}
@@ -158,32 +160,44 @@ export default function CalendarView({ profile }: Props) {
               key={day}
               type="button"
               onClick={() => setSelectedDate(date)}
-              className={`relative flex min-h-[44px] flex-col items-center justify-start rounded-xl pt-2 pb-1 transition-all active:scale-[0.92] ${
-                isSelected
-                  ? 'bg-[#D97706]/15'
+              className="relative flex min-h-[44px] flex-col items-center justify-start rounded-xl pt-2 pb-1 transition-all active:scale-[0.92]"
+              style={{
+                background: isSelected
+                  ? 'rgba(217,119,6,0.15)'
                   : todayCell
-                  ? 'bg-white/[0.07]'
-                  : 'hover:bg-white/[0.04]'
-              }`}
+                  ? 'rgba(255,255,255,0.07)'
+                  : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
               <span
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-[14px] font-medium ${
-                  todayCell
-                    ? 'bg-[#D97706] text-white'
-                    : isSelected
-                    ? 'text-[#D97706]'
-                    : 'text-[#8E8E93]'
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  background: todayCell ? '#D97706' : 'transparent',
+                  color: todayCell ? '#FFF' : isSelected ? '#D97706' : 'rgba(235,235,245,0.5)',
+                }}
               >
                 {day}
               </span>
               {dayLeads.length > 0 && (
-                <div className="mt-1 flex gap-0.5">
+                <div style={{ marginTop: '4px', display: 'flex', gap: '2px' }}>
                   {dayLeads.slice(0, 3).map((l, i) => (
                     <span
                       key={i}
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: STATUS_COLOR[l.status] }}
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: STATUS_COLOR[l.status],
+                      }}
                     />
                   ))}
                 </div>
@@ -194,64 +208,87 @@ export default function CalendarView({ profile }: Props) {
       </div>
 
       {/* Selected day schedule list */}
-      <div className="mt-5 px-4">
-        <p className="mb-3 text-[13px] font-medium text-[#8E8E93]">
+      <div style={{ marginTop: '20px', padding: '0 16px' }}>
+        <p style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 500, color: 'rgba(235,235,245,0.4)' }}>
           {format(selectedDate, 'EEEE, MMMM d')}
           {' · '}
-          <span className="text-[#636366]">
+          <span style={{ color: 'rgba(235,235,245,0.3)' }}>
             {selectedDayLeads.length} scheduled
           </span>
         </p>
 
         {selectedDayLeads.length === 0 ? (
-          <p className="py-8 text-center text-[14px] text-[#48484A]">
+          <p style={{ padding: '32px 0', textAlign: 'center', fontSize: '14px', color: 'rgba(235,235,245,0.2)' }}>
             No visits scheduled
           </p>
         ) : (
-          <div className="flex flex-col gap-2.5">
-            {selectedDayLeads.map(lead => (
-              <div
-                key={lead.id}
-                className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#1C1C1E] px-4 py-3.5"
-              >
-                <span
-                  className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: STATUS_COLOR[lead.status] }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDrawerLead(lead)
-                    setIsDrawerOpen(true)
-                  }}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <p className="truncate text-[15px] font-semibold text-white">
-                    {lead.cafe_name}
-                  </p>
-                  <p className="mt-0.5 text-[12px] text-[#8E8E93]">
-                    {lead.scheduled_date &&
-                      format(new Date(lead.scheduled_date), 'h:mm a')}
-                    {lead.scheduled_type &&
-                      ` · ${SCHEDULED_TYPE_LABEL[lead.scheduled_type] ?? lead.scheduled_type}`}
-                  </p>
-                </button>
-                <span
-                  className="flex-shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-semibold"
-                  style={{
-                    backgroundColor: `${STATUS_COLOR[lead.status]}20`,
-                    color: STATUS_COLOR[lead.status],
-                  }}
-                >
-                  {STATUS_LABEL[lead.status]}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setCheckInLead(lead)}
-                  className="flex-shrink-0 rounded-lg bg-[#D97706] px-3 py-1.5 text-[12px] font-semibold text-white transition-all active:scale-[0.94] hover:bg-[#B45309]"
-                >
-                  Check In
-                </button>
+          <div style={{ background: '#1C1C1E', borderRadius: '16px', overflow: 'hidden' }}>
+            {selectedDayLeads.map((lead, index) => (
+              <div key={lead.id}>
+                {index > 0 && (
+                  <div style={{ height: '0.5px', background: 'rgba(84,84,88,0.65)', margin: '0 16px' }} />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
+                  <span
+                    style={{
+                      marginTop: '2px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      flexShrink: 0,
+                      background: STATUS_COLOR[lead.status],
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDrawerLead(lead)
+                      setIsDrawerOpen(true)
+                    }}
+                    style={{ minWidth: 0, flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {lead.cafe_name}
+                    </p>
+                    <p style={{ marginTop: '2px', fontSize: '12px', color: 'rgba(235,235,245,0.4)' }}>
+                      {lead.scheduled_date &&
+                        format(new Date(lead.scheduled_date), 'h:mm a')}
+                      {lead.scheduled_type &&
+                        ` · ${SCHEDULED_TYPE_LABEL[lead.scheduled_type] ?? lead.scheduled_type}`}
+                    </p>
+                  </button>
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      padding: '2px 8px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      background: `${STATUS_COLOR[lead.status]}20`,
+                      color: STATUS_COLOR[lead.status],
+                    }}
+                  >
+                    {STATUS_LABEL[lead.status]}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCheckInLead(lead)}
+                    className="transition-all active:scale-[0.94]"
+                    style={{
+                      flexShrink: 0,
+                      background: '#D97706',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#FFF',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Check In
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -270,7 +307,8 @@ export default function CalendarView({ profile }: Props) {
       <button
         type="button"
         onClick={() => setIsNewScheduleOpen(true)}
-        className="fixed bottom-[88px] right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
+        className="fixed right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
+        style={{ bottom: '106px' }}
         aria-label="Schedule visit"
       >
         <Plus size={22} className="text-white" />

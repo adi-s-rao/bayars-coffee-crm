@@ -12,8 +12,17 @@ interface Props {
   profile: Profile
 }
 
-const inputClass =
-  'w-full rounded-xl bg-white/[0.07] px-3.5 py-3 text-[15px] text-white outline-none placeholder:text-[#636366] focus:bg-white/[0.10] transition-colors'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(118,118,128,0.12)',
+  borderRadius: '10px',
+  border: 'none',
+  padding: '12px 14px',
+  fontSize: '15px',
+  color: '#FFF',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
 
 export default function SettingsModal({ isOpen, onClose, profile }: Props) {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -101,71 +110,109 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
     )
   }
 
-  const locBadge = (
-    status: LocStatus
-  ): { label: string; bg: string; color: string } => {
+  const locBadge = (status: LocStatus): { label: string; bg: string; color: string } => {
     if (status === 'granted') return { label: 'Granted', bg: 'rgba(48,209,88,0.15)', color: '#30D158' }
     if (status === 'denied')  return { label: 'Denied',  bg: 'rgba(255,69,58,0.15)', color: '#FF453A' }
-    return { label: 'Unknown', bg: 'rgba(142,142,147,0.15)', color: '#8E8E93' }
+    return { label: 'Unknown', bg: 'rgba(118,118,128,0.2)', color: 'rgba(235,235,245,0.6)' }
   }
   const badge = locBadge(locationStatus)
+
+  const sectionLabel: React.CSSProperties = {
+    marginBottom: '12px',
+    fontSize: '13px',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'rgba(235,235,245,0.4)',
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-[#1C1C1E] p-6">
-
+      <div
+        className="relative z-10 w-full max-w-md overflow-y-auto"
+        style={{
+          background: '#1C1C1E',
+          borderRadius: '24px',
+          padding: '24px',
+          maxHeight: '90vh',
+          border: '0.5px solid rgba(84,84,88,0.65)',
+        }}
+      >
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-[20px] font-semibold text-white">Settings</h2>
-            <p className="mt-0.5 text-[13px] text-[#8E8E93]">{profile.full_name}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Settings</h2>
+            <p style={{ marginTop: '2px', fontSize: '13px', color: 'rgba(235,235,245,0.4)' }}>{profile.full_name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-white/[0.07] p-2 text-[#8E8E93] transition-colors hover:text-white"
+            className="transition-colors active:scale-[0.92]"
+            style={{
+              background: 'rgba(118,118,128,0.15)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px',
+              color: 'rgba(235,235,245,0.6)',
+              cursor: 'pointer',
+            }}
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Account */}
-        <div className="mb-6">
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-[#636366]">Account</p>
-          <div className="flex flex-col gap-3">
+        <div style={{ marginBottom: '24px' }}>
+          <p style={sectionLabel}>Account</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <input
               type="password"
               placeholder="Current password"
               value={currentPassword}
               onChange={e => setCurrentPassword(e.target.value)}
-              className={inputClass}
+              style={inputStyle}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
             <input
               type="password"
               placeholder="New password"
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              className={inputClass}
+              style={inputStyle}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
             <input
               type="password"
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              className={inputClass}
+              style={inputStyle}
+              className="placeholder:text-[rgba(235,235,245,0.3)]"
             />
             {passwordError && (
-              <p className="text-[13px] text-[#FF453A]">{passwordError}</p>
+              <p style={{ fontSize: '13px', color: '#FF453A' }}>{passwordError}</p>
             )}
             {passwordSuccess && (
-              <p className="text-[13px] text-[#30D158]">Password updated successfully</p>
+              <p style={{ fontSize: '13px', color: '#30D158' }}>Password updated successfully</p>
             )}
             <button
               type="button"
               onClick={handlePasswordUpdate}
               disabled={passwordUpdating}
-              className="w-full rounded-2xl bg-[#D97706] py-[14px] text-[17px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#B45309] disabled:opacity-50"
+              className="flex items-center justify-center transition-all active:scale-[0.98]"
+              style={{
+                width: '100%',
+                height: '50px',
+                borderRadius: '14px',
+                background: '#D97706',
+                color: '#FFF',
+                fontSize: '17px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: passwordUpdating ? 'not-allowed' : 'pointer',
+                opacity: passwordUpdating ? 0.5 : 1,
+              }}
             >
               {passwordUpdating ? 'Updating…' : 'Update Password'}
             </button>
@@ -173,19 +220,45 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
         </div>
 
         {/* Appearance */}
-        <div className="mb-6">
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-[#636366]">Appearance</p>
-          <div className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-4 py-3.5">
-            <span className="text-[15px] text-white">Dark Mode</span>
+        <div style={{ marginBottom: '24px' }}>
+          <p style={sectionLabel}>Appearance</p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(118,118,128,0.08)',
+              borderRadius: '12px',
+              padding: '14px 16px',
+            }}
+          >
+            <span style={{ fontSize: '15px', color: '#FFF' }}>Dark Mode</span>
             <button
               type="button"
               onClick={handleDarkModeToggle}
-              className={`relative h-[28px] w-[50px] rounded-full transition-colors ${darkMode ? 'bg-[#D97706]' : 'bg-[#3A3A3C]'}`}
+              style={{
+                position: 'relative',
+                width: '50px',
+                height: '28px',
+                borderRadius: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                background: darkMode ? '#D97706' : 'rgba(118,118,128,0.4)',
+                transition: 'background 0.2s ease',
+              }}
             >
               <span
-                className={`absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ${
-                  darkMode ? 'left-[25px]' : 'left-[3px]'
-                }`}
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: darkMode ? '25px' : '3px',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: '#FFF',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  transition: 'left 0.2s ease',
+                }}
               />
             </button>
           </div>
@@ -193,16 +266,31 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
 
         {/* Permissions */}
         <div>
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-[#636366]">Permissions</p>
-          <div className="flex items-center justify-between rounded-2xl bg-white/[0.05] px-4 py-3.5">
-            <div className="flex items-center gap-2.5">
-              <MapPin size={15} className="text-[#8E8E93]" />
-              <span className="text-[15px] text-white">Location Access</span>
+          <p style={sectionLabel}>Permissions</p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(118,118,128,0.08)',
+              borderRadius: '12px',
+              padding: '14px 16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MapPin size={15} style={{ color: 'rgba(235,235,245,0.6)' }} />
+              <span style={{ fontSize: '15px', color: '#FFF' }}>Location Access</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span
-                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                style={{ backgroundColor: badge.bg, color: badge.color }}
+                style={{
+                  borderRadius: '20px',
+                  padding: '3px 10px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  background: badge.bg,
+                  color: badge.color,
+                }}
               >
                 {badge.label}
               </span>
@@ -210,7 +298,16 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
                 <button
                   type="button"
                   onClick={requestLocation}
-                  className="rounded-lg bg-white/[0.07] px-2.5 py-1 text-[12px] text-[#8E8E93] transition-colors hover:text-white"
+                  className="transition-colors hover:text-white"
+                  style={{
+                    background: 'rgba(118,118,128,0.2)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    color: 'rgba(235,235,245,0.6)',
+                    cursor: 'pointer',
+                  }}
                 >
                   Request
                 </button>
