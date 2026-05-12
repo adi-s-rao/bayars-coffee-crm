@@ -9,6 +9,7 @@ interface Props {
   lead: Lead
   isOpen: boolean
   onClose: () => void
+  onCheckedIn?: (updatedLead: Lead) => void
   profile: Profile
 }
 
@@ -22,7 +23,7 @@ const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string
 
 const CHECKIN_TYPES: CheckInType[] = ['visit', 'demo', 'workshop']
 
-export default function CheckInModal({ lead, isOpen, onClose, profile }: Props) {
+export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profile }: Props) {
   const [checkinType, setCheckinType] = useState<CheckInType>('visit')
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading] = useState(false)
@@ -76,7 +77,9 @@ export default function CheckInModal({ lead, isOpen, onClose, profile }: Props) 
         }),
       })
       if (!res.ok) throw new Error('Failed')
+      const json = await res.json() as { success: boolean; lead: Lead | null }
       toast.success('Check-in recorded!')
+      if (json.lead) onCheckedIn?.(json.lead)
       onClose()
     } catch {
       toast.error('Failed to submit check-in. Please try again.')

@@ -276,6 +276,7 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
           lead={selectedLead}
           isOpen={isCheckInOpen}
           onClose={() => setIsCheckInOpen(false)}
+          onCheckedIn={handleLeadUpdate}
           profile={profile}
         />
       )}

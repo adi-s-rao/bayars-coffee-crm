@@ -111,7 +111,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, checkin: data })
+    // If this check-in is tied to a lead, bump updated_at so "Last visit"
+    // reflects the visit time, then return the refreshed lead to the client.
+    let updatedLead = null
+    if (body.lead_id && body.type !== 'start_day' && body.type !== 'end_day') {
+      await admin
+        .from('leads')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', body.lead_id)
+      const { data: leadData } = await admin
+        .from('leads')
+        .select('*')
+        .eq('id', body.lead_id)
+        .single()
+      updatedLead = leadData
+    }
+
+    return NextResponse.json({ success: true, checkin: data, lead: updatedLead })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
