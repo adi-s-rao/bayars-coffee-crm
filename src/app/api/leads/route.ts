@@ -26,7 +26,8 @@ export async function GET() {
     const p = profile as Pick<Profile, 'role'> | null
     const isManager = p?.role === 'manager'
 
-    const query = supabase
+    const adminClient = createAdminClient()
+    const query = adminClient
       .from('leads')
       .select('*')
       .order('updated_at', { ascending: false })
