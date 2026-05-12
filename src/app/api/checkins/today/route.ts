@@ -16,19 +16,26 @@ export async function GET() {
       .eq('user_id', user.id)
       .gte('created_at', todayMidnight.toISOString())
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('checkins/today query error:', error.message)
+      return NextResponse.json({ checkInCount: 0, totalKm: 0 })
+    }
 
     const rows = (data ?? []) as { type: string; distance_from_previous_km: number | null }[]
 
     const VISIT_TYPES = new Set(['visit', 'demo', 'workshop'])
     const checkInCount = rows.filter(r => VISIT_TYPES.has(r.type)).length
-    const totalKm = rows.reduce((sum, r) => sum + (r.distance_from_previous_km ?? 0), 0)
+    const totalKm = (data ?? []).reduce(
+      (sum, c) => sum + ((c as { distance_from_previous_km: number | null }).distance_from_previous_km ?? 0),
+      0
+    )
 
     return NextResponse.json({
       checkInCount,
       totalKm: Math.round(totalKm * 10) / 10,
     })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Internal server error' }, { status: 500 })
+    console.error('checkins/today error:', e)
+    return NextResponse.json({ checkInCount: 0, totalKm: 0 })
   }
 }

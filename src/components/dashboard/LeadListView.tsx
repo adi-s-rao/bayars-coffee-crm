@@ -47,13 +47,20 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false)
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
-  const [todayStats, setTodayStats] = useState<{ checkInCount: number; totalKm: number } | null>(null)
+  const [checkInCount, setCheckInCount] = useState(0)
+  const [totalKm, setTotalKm] = useState(0)
 
   useEffect(() => {
     fetch('/api/checkins/today')
       .then(r => r.json())
-      .then((d: { checkInCount: number; totalKm: number }) => setTodayStats(d))
-      .catch(() => {})
+      .then(data => {
+        setCheckInCount(data?.checkInCount ?? 0)
+        setTotalKm(data?.totalKm ?? 0)
+      })
+      .catch(() => {
+        setCheckInCount(0)
+        setTotalKm(0)
+      })
   }, [])
 
   const leadsToday = leads.filter(l => isToday(new Date(l.created_at))).length
@@ -106,9 +113,9 @@ export default function LeadListView({ leads: initialLeads, profile }: Props) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2.5 px-4 py-3.5">
         {[
-          { value: String(leadsToday),                                          label: 'Leads Today' },
-          { value: todayStats ? String(todayStats.checkInCount) : '--',         label: 'Check-ins' },
-          { value: todayStats ? todayStats.totalKm.toFixed(1) : '--',           label: 'KM Today' },
+          { value: String(leadsToday ?? 0),              label: 'Leads Today' },
+          { value: String(checkInCount ?? 0),            label: 'Check-ins' },
+          { value: (totalKm ?? 0).toFixed(1),            label: 'KM Today' },
         ].map(({ value, label }) => (
           <div
             key={label}
