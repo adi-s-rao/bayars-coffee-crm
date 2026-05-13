@@ -1,33 +1,32 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import './globals.css'
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+})
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
   title: "Bayar's Coffee CRM",
-  description: "SFA CRM for Bayar's cafe sales team",
+  description: 'SFA CRM for Bayar\'s cafe sales team',
   other: {
     'theme-color': '#0A0A0A',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
   },
-};
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"
@@ -40,9 +39,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <ThemeProvider>
           {children}
           <Toaster position="top-center" theme="dark" richColors />
-        </body>
+        </ThemeProvider>
+      </body>
     </html>
-  );
+  )
 }

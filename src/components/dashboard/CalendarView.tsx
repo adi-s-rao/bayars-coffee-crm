@@ -106,7 +106,7 @@ export default function CalendarView({ profile }: Props) {
   }
 
   return (
-    <div style={{ background: '#000', paddingBottom: '100px' }}>
+    <div style={{ background: 'var(--bg-page)', paddingBottom: '100px' }}>
       {/* Month header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px' }}>
         <button
@@ -117,7 +117,7 @@ export default function CalendarView({ profile }: Props) {
         >
           <ChevronLeft size={18} />
         </button>
-        <span style={{ fontSize: '17px', fontWeight: 600, color: '#FFF' }}>
+        <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--label-primary)' }}>
           {format(currentMonth, 'MMMM yyyy')}
         </span>
         <button
@@ -133,7 +133,7 @@ export default function CalendarView({ profile }: Props) {
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 px-3 pb-1">
         {DAYS.map(d => (
-          <div key={d} style={{ padding: '6px 0', textAlign: 'center', fontSize: '12px', fontWeight: 500, color: 'rgba(235,235,245,0.35)' }}>
+          <div key={d} style={{ padding: '6px 0', textAlign: 'center', fontSize: '12px', fontWeight: 500, color: 'var(--label-tertiary)' }}>
             {d}
           </div>
         ))}
@@ -182,7 +182,7 @@ export default function CalendarView({ profile }: Props) {
                   fontSize: '14px',
                   fontWeight: 500,
                   background: todayCell ? '#D97706' : 'transparent',
-                  color: todayCell ? '#FFF' : isSelected ? '#D97706' : 'rgba(235,235,245,0.5)',
+                  color: todayCell ? 'var(--label-primary)' : isSelected ? '#D97706' : 'var(--label-secondary)',
                 }}
               >
                 {day}
@@ -209,24 +209,24 @@ export default function CalendarView({ profile }: Props) {
 
       {/* Selected day schedule list */}
       <div style={{ marginTop: '20px', padding: '0 16px' }}>
-        <p style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 500, color: 'rgba(235,235,245,0.4)' }}>
+        <p style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 500, color: 'var(--label-tertiary)' }}>
           {format(selectedDate, 'EEEE, MMMM d')}
           {' · '}
-          <span style={{ color: 'rgba(235,235,245,0.3)' }}>
+          <span style={{ color: 'var(--label-quaternary)' }}>
             {selectedDayLeads.length} scheduled
           </span>
         </p>
 
         {selectedDayLeads.length === 0 ? (
-          <p style={{ padding: '32px 0', textAlign: 'center', fontSize: '14px', color: 'rgba(235,235,245,0.2)' }}>
+          <p style={{ padding: '32px 0', textAlign: 'center', fontSize: '14px', color: 'var(--label-quaternary)' }}>
             No visits scheduled
           </p>
         ) : (
-          <div style={{ background: '#1C1C1E', borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden' }}>
             {selectedDayLeads.map((lead, index) => (
               <div key={lead.id}>
                 {index > 0 && (
-                  <div style={{ height: '0.5px', background: 'rgba(84,84,88,0.65)', margin: '0 16px' }} />
+                  <div style={{ height: '0.5px', background: 'var(--separator)', margin: '0 16px' }} />
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
                   <span
@@ -247,10 +247,10 @@ export default function CalendarView({ profile }: Props) {
                     }}
                     style={{ minWidth: 0, flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
-                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--label-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {lead.cafe_name}
                     </p>
-                    <p style={{ marginTop: '2px', fontSize: '12px', color: 'rgba(235,235,245,0.4)' }}>
+                    <p style={{ marginTop: '2px', fontSize: '12px', color: 'var(--label-tertiary)' }}>
                       {lead.scheduled_date &&
                         format(new Date(lead.scheduled_date), 'h:mm a')}
                       {lead.scheduled_type &&

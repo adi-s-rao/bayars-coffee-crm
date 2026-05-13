@@ -7,19 +7,20 @@ import {
   BarChart2,
   Bell,
   Calendar,
+  Coffee,
   Home,
   Loader2,
   LogOut,
   MapPin,
-  Menu,
   RefreshCw,
   Settings,
+  Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
 import { format } from 'date-fns'
-import Sidebar from './Sidebar'
 import SettingsModal from './SettingsModal'
+import NotificationPanel from './NotificationPanel'
 
 interface DayState {
   started: boolean
@@ -53,6 +54,11 @@ const NAV_ITEMS = [
   { label: 'Reports',  href: '/dashboard/reports',  Icon: BarChart2 },
 ]
 
+type NotifPayload =
+  | { type: 'rep'; scheduledToday: unknown[] }
+  | { type: 'manager'; flaggedCheckins: unknown[]; repsNotStarted: unknown[] }
+  | null
+
 export default function DashboardShell({ profile, children }: Props) {
   const pathname = usePathname()
   const router = useRouter()
@@ -61,9 +67,12 @@ export default function DashboardShell({ profile, children }: Props) {
   const [dayState, setDayState] = useState<DayState | null>(null)
   const [dayLoading, setDayLoading] = useState(false)
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifPayload, setNotifPayload] = useState<NotifPayload>(null)
+  const [notifCount, setNotifCount] = useState(0)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -87,6 +96,22 @@ export default function DashboardShell({ profile, children }: Props) {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isProfileDropdownOpen])
+
+  // Fetch notifications on mount
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then(r => r.json())
+      .then((data: NotifPayload) => {
+        setNotifPayload(data)
+        if (!data) return
+        if (data.type === 'rep') {
+          setNotifCount(data.scheduledToday.length)
+        } else {
+          setNotifCount(data.flaggedCheckins.length + data.repsNotStarted.length)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function getPosition(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) =>
@@ -169,13 +194,15 @@ export default function DashboardShell({ profile, children }: Props) {
     }
   }
 
+  const isManager = profile.role === 'manager'
+
   return (
-    <div className="flex min-h-screen flex-col bg-black">
-      {/* Top Navbar — Liquid Glass */}
+    <div className="flex min-h-screen flex-col" style={{ background: 'var(--bg-page)' }}>
+      {/* Top Navbar */}
       <header
         className="relative sticky top-0 z-30 px-4 py-3.5"
         style={{
-          background: 'rgba(28,28,30,0.72)',
+          background: 'var(--bg-navbar)',
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           borderBottom: '0.5px solid rgba(255,255,255,0.08)',
@@ -185,22 +212,41 @@ export default function DashboardShell({ profile, children }: Props) {
           <div className="absolute left-0 right-0 top-0 z-50 h-[2px] bg-[#D97706]" />
         )}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen(true)}
-              className="transition-colors active:scale-[0.92]"
-              style={{ color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <Menu size={20} />
-            </button>
-            <span style={{ fontSize: '17px', fontWeight: 600, color: '#FFF' }}>Bayar&apos;s CRM</span>
+          {/* Brand — no burger menu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Coffee size={16} style={{ color: '#D97706' }} />
+            <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--label-primary)' }}>
+              Bayar&apos;s CRM
+            </span>
           </div>
-          <div className="flex items-center gap-3">
-            <button type="button" style={{ color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <Bell size={20} />
-            </button>
 
+          <div className="flex items-center gap-3">
+            {/* Bell */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setNotifOpen(v => !v)}
+                style={{ color: 'var(--label-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <Bell size={20} />
+              </button>
+              {notifCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#D97706',
+                    display: 'block',
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Avatar + dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
@@ -236,6 +282,20 @@ export default function DashboardShell({ profile, children }: Props) {
                       <Settings size={14} />
                       Settings
                     </button>
+                    {isManager && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false)
+                          startTransition(() => router.push('/dashboard/import'))
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
+                        style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)', background: 'none', border: 'none', cursor: 'pointer' }}
+                      >
+                        <Upload size={14} />
+                        Import Data
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => { void signOut(); setIsProfileDropdownOpen(false) }}
@@ -266,10 +326,10 @@ export default function DashboardShell({ profile, children }: Props) {
       {/* Day Status Bar */}
       <div
         style={{
-          background: 'rgba(28,28,30,0.72)',
+          background: 'var(--bg-navbar)',
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          borderBottom: '0.5px solid rgba(84,84,88,0.65)',
+          borderBottom: '0.5px solid var(--separator)',
           height: '44px',
           display: 'flex',
           alignItems: 'center',
@@ -282,17 +342,15 @@ export default function DashboardShell({ profile, children }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
               style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
+                width: '6px', height: '6px', borderRadius: '50%',
                 background: '#30D158',
                 boxShadow: '0 0 0 3px rgba(48,209,88,0.2)',
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#E5E5E7' }}>Day Started</span>
-            <span style={{ color: 'rgba(84,84,88,0.9)' }}>·</span>
-            <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.45)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--label-primary)' }}>Day Started</span>
+            <span style={{ color: 'var(--separator)' }}>·</span>
+            <span style={{ fontSize: '13px', color: 'var(--label-secondary)' }}>
               {format(new Date(dayState.startTime), 'h:mm a')}
             </span>
           </div>
@@ -300,14 +358,12 @@ export default function DashboardShell({ profile, children }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
               style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: 'rgba(84,84,88,0.9)',
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: 'var(--separator)',
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.45)' }}>Day not started</span>
+            <span style={{ fontSize: '13px', color: 'var(--label-secondary)' }}>Day not started</span>
           </div>
         )}
         <div>
@@ -327,6 +383,7 @@ export default function DashboardShell({ profile, children }: Props) {
                 fontWeight: 600,
                 cursor: 'pointer',
                 opacity: dayLoading ? 0.5 : 1,
+                fontFamily: 'inherit',
               }}
             >
               {dayLoading && <Loader2 size={11} className="animate-spin" />}
@@ -348,6 +405,7 @@ export default function DashboardShell({ profile, children }: Props) {
                 fontWeight: 600,
                 cursor: 'pointer',
                 opacity: dayLoading ? 0.5 : 1,
+                fontFamily: 'inherit',
               }}
             >
               {dayLoading && <Loader2 size={11} className="animate-spin" />}
@@ -384,8 +442,7 @@ export default function DashboardShell({ profile, children }: Props) {
           {NAV_ITEMS.map(({ label, href, Icon }) => {
             const active = pathname === href
             const isReports = href === '/dashboard/reports'
-            const isRep = profile.role !== 'manager'
-            const inactiveColor = isReports && isRep
+            const inactiveColor = isReports && !isManager
               ? 'rgba(235,235,245,0.25)'
               : 'rgba(235,235,245,0.45)'
             return (
@@ -403,13 +460,7 @@ export default function DashboardShell({ profile, children }: Props) {
                 style={{ textDecoration: 'none' }}
               >
                 <Icon size={24} color={active ? '#D97706' : inactiveColor} />
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 400,
-                    color: active ? '#D97706' : inactiveColor,
-                  }}
-                >
+                <span style={{ fontSize: '11px', fontWeight: 400, color: active ? '#D97706' : inactiveColor }}>
                   {label}
                 </span>
               </Link>
@@ -418,12 +469,14 @@ export default function DashboardShell({ profile, children }: Props) {
         </div>
       </nav>
 
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        profile={profile}
-        onSettingsOpen={() => setIsSettingsOpen(true)}
-      />
+      {/* Notification Panel */}
+      {notifOpen && (
+        <NotificationPanel
+          payload={notifPayload as Parameters<typeof NotificationPanel>[0]['payload']}
+          profile={profile}
+          onClose={() => setNotifOpen(false)}
+        />
+      )}
 
       <SettingsModal
         isOpen={isSettingsOpen}

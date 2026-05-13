@@ -144,7 +144,7 @@ export default function LeadListView({ profile }: Props) {
   }
 
   return (
-    <div style={{ background: '#000', paddingBottom: '100px' }}>
+    <div style={{ background: 'var(--bg-page)', paddingBottom: '100px' }}>
       {/* Stats row — horizontal scroll */}
       <div
         style={{ display: 'flex', gap: '10px', padding: '16px', overflowX: 'auto' }}
@@ -157,12 +157,12 @@ export default function LeadListView({ profile }: Props) {
         ].map(({ value, label }) => (
           <div
             key={label}
-            style={{ minWidth: '110px', background: '#1C1C1E', borderRadius: '16px', padding: '14px', flexShrink: 0 }}
+            style={{ minWidth: '110px', background: 'var(--bg-card)', borderRadius: '16px', padding: '14px', flexShrink: 0 }}
           >
             <p style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.5px', color: '#D97706' }}>
               {value}
             </p>
-            <p style={{ marginTop: '6px', fontSize: '12px', fontWeight: 500, color: 'rgba(235,235,245,0.45)' }}>{label}</p>
+            <p style={{ marginTop: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--label-tertiary)' }}>{label}</p>
           </div>
         ))}
       </div>
@@ -176,7 +176,7 @@ export default function LeadListView({ profile }: Props) {
             left: '28px',
             top: '50%',
             transform: 'translateY(-55%)',
-            color: 'rgba(235,235,245,0.35)',
+            color: 'var(--label-tertiary)',
             pointerEvents: 'none',
           }}
         />
@@ -185,7 +185,7 @@ export default function LeadListView({ profile }: Props) {
           placeholder="Search cafes…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="placeholder:text-[rgba(235,235,245,0.35)]"
+          className="placeholder:text-[var(--label-tertiary)]"
           style={{
             width: '100%',
             height: '36px',
@@ -196,7 +196,7 @@ export default function LeadListView({ profile }: Props) {
             paddingLeft: '32px',
             paddingRight: '12px',
             fontSize: '17px',
-            color: '#FFF',
+            color: 'var(--label-primary)',
             boxSizing: 'border-box',
           }}
         />
@@ -223,7 +223,7 @@ export default function LeadListView({ profile }: Props) {
               border: 'none',
               cursor: 'pointer',
               background: statusFilter === value ? '#D97706' : 'rgba(118,118,128,0.2)',
-              color: statusFilter === value ? '#FFF' : 'rgba(235,235,245,0.6)',
+              color: statusFilter === value ? '#FFF' : 'var(--label-secondary)',
             }}
           >
             {label}
@@ -239,24 +239,24 @@ export default function LeadListView({ profile }: Props) {
               <div
                 key={i}
                 className="animate-pulse"
-                style={{ height: '120px', borderRadius: '16px', background: '#1C1C1E' }}
+                style={{ height: '120px', borderRadius: '16px', background: 'var(--bg-card)' }}
               />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 0', textAlign: 'center' }}>
-            <Coffee size={40} style={{ color: '#2C2C2E' }} />
-            <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 500, color: '#636366' }}>No leads found</p>
-            <p style={{ marginTop: '4px', fontSize: '13px', color: '#48484A' }}>Add your first lead to get started</p>
+            <Coffee size={40} style={{ color: 'var(--label-quaternary)' }} />
+            <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 500, color: 'var(--label-secondary)' }}>No leads found</p>
+            <p style={{ marginTop: '4px', fontSize: '13px', color: 'var(--label-tertiary)' }}>Add your first lead to get started</p>
           </div>
         ) : (
-          <div style={{ background: '#1C1C1E', borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden' }}>
             {filtered.map((lead, index) => {
               const meta = STATUS_META[lead.status]
               return (
                 <Fragment key={lead.id}>
                   {index > 0 && (
-                    <div style={{ height: '0.5px', background: 'rgba(84,84,88,0.65)', margin: '0 16px' }} />
+                    <div style={{ height: '0.5px', background: 'var(--separator)', margin: '0 16px' }} />
                   )}
                   <div style={{ padding: '14px 16px' }}>
                     {/* Top row */}
@@ -275,11 +275,11 @@ export default function LeadListView({ profile }: Props) {
                         }}
                       />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ fontSize: '17px', fontWeight: 600, color: '#FFF', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p style={{ fontSize: '17px', fontWeight: 600, color: 'var(--label-primary)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {lead.cafe_name}
                         </p>
                         {lead.location_address && (
-                          <p style={{ marginTop: '2px', fontSize: '13px', color: 'rgba(235,235,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <p style={{ marginTop: '2px', fontSize: '13px', color: 'var(--label-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {lead.location_address}
                           </p>
                         )}
@@ -304,16 +304,16 @@ export default function LeadListView({ profile }: Props) {
                       style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
                       onClick={() => openDrawer(lead)}
                     >
-                      <User size={13} style={{ color: 'rgba(235,235,245,0.35)', flexShrink: 0 }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{lead.poc_name || '—'}</span>
+                      <User size={13} style={{ color: 'var(--label-tertiary)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', color: 'var(--label-secondary)' }}>{lead.poc_name || '—'}</span>
                       <span style={{ color: 'rgba(84,84,88,0.9)' }}>·</span>
-                      <Phone size={13} style={{ color: 'rgba(235,235,245,0.35)', flexShrink: 0 }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{lead.poc_contact || '—'}</span>
+                      <Phone size={13} style={{ color: 'var(--label-tertiary)', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', color: 'var(--label-secondary)' }}>{lead.poc_contact || '—'}</span>
                     </div>
 
                     {/* Bottom row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                      <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.35)' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--label-tertiary)' }}>
                         {lastVisitLabel(lead.updated_at)}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

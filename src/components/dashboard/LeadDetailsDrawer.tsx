@@ -37,7 +37,7 @@ type NumericField = 'bean_usage_kg' | 'bean_price_per_kg' | 'cappuccino_price' |
 
 const fieldRowStyle = (isLast: boolean): React.CSSProperties => ({
   padding: '14px 16px',
-  borderBottom: isLast ? 'none' : '0.5px solid rgba(84,84,88,0.65)',
+  borderBottom: isLast ? 'none' : '0.5px solid var(--separator)',
 })
 
 const labelStyle: React.CSSProperties = {
@@ -45,21 +45,21 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
-  color: 'rgba(235,235,245,0.45)',
+  color: 'var(--label-tertiary)',
   marginBottom: '4px',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(118,118,128,0.12)',
+  background: 'var(--bg-input)',
   borderRadius: '10px',
   border: 'none',
   padding: '10px 14px',
   fontSize: '15px',
-  color: '#FFF',
+  color: 'var(--label-primary)',
   outline: 'none',
   boxSizing: 'border-box',
-  colorScheme: 'dark',
+  fontFamily: 'inherit',
 }
 
 export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onDelete, refreshTrigger }: Props) {
@@ -179,7 +179,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         ) : (
           <p
             onClick={() => setEditingField(field)}
-            style={{ fontSize: '17px', color: '#FFF', cursor: 'pointer' }}
+            style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}
           >
             {value || '—'}
           </p>
@@ -207,7 +207,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         ) : (
           <p
             onClick={() => setEditingField(field)}
-            style={{ fontSize: '17px', color: '#FFF', cursor: 'pointer' }}
+            style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}
           >
             {value !== undefined ? value : '—'}
           </p>
@@ -229,12 +229,12 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:w-[420px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ background: '#1C1C1E', borderLeft: '0.5px solid rgba(84,84,88,0.65)' }}
+        style={{ background: 'var(--bg-card)', borderLeft: '0.5px solid var(--separator)' }}
       >
         {/* Header */}
-        <div style={{ borderBottom: '0.5px solid rgba(84,84,88,0.65)', padding: '20px 20px 0' }}>
+        <div style={{ borderBottom: '0.5px solid var(--separator)', padding: '20px 20px 0' }}>
           <div className="flex items-start justify-between gap-2">
-            <p style={{ fontSize: '22px', fontWeight: 700, color: '#FFF', lineHeight: 1.2 }}>{localLead.cafe_name}</p>
+            <p style={{ fontSize: '22px', fontWeight: 700, color: 'var(--label-primary)', lineHeight: 1.2 }}>{localLead.cafe_name}</p>
             <span
               style={{
                 flexShrink: 0,
@@ -285,7 +285,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                 border: 'none',
                 borderRadius: '10px',
                 padding: '8px',
-                color: 'rgba(235,235,245,0.6)',
+                color: 'var(--label-secondary)',
                 cursor: 'pointer',
               }}
             >
@@ -294,7 +294,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
           </div>
 
           {/* Tab bar */}
-          <div style={{ position: 'relative', display: 'flex', gap: '20px', borderBottom: '0.5px solid rgba(84,84,88,0.65)' }}>
+          <div style={{ position: 'relative', display: 'flex', gap: '20px', borderBottom: '0.5px solid var(--separator)' }}>
             {([
               { key: 'overview' as DrawerTab, label: 'Overview',      ref: overviewRef  },
               { key: 'coffee'   as DrawerTab, label: 'Coffee Details', ref: coffeeRef    },
@@ -309,7 +309,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                   paddingBottom: '12px',
                   fontSize: '15px',
                   fontWeight: 500,
-                  color: activeTab === key ? '#FFF' : 'rgba(235,235,245,0.4)',
+                  color: activeTab === key ? 'var(--label-primary)' : 'var(--label-tertiary)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -342,14 +342,14 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
               <div style={{ background: 'rgba(118,118,128,0.08)', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
                 {/* Address */}
                 <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <MapPin size={15} style={{ marginTop: '2px', flexShrink: 0, color: 'rgba(235,235,245,0.35)' }} />
-                  <p style={{ fontSize: '15px', color: 'rgba(235,235,245,0.7)' }}>
+                  <MapPin size={15} style={{ marginTop: '2px', flexShrink: 0, color: 'var(--label-tertiary)' }} />
+                  <p style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>
                     {localLead.location_address || 'No address'}
                   </p>
                 </div>
                 {/* POC */}
                 <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '15px', color: 'rgba(235,235,245,0.7)' }}>{localLead.poc_name || '—'}</span>
+                  <span style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>{localLead.poc_name || '—'}</span>
                   {localLead.poc_contact && (
                     <a
                       href={`tel:${localLead.poc_contact}`}
@@ -391,7 +391,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                   />
                 </div>
               </div>
-              <p style={{ fontSize: '12px', color: 'rgba(235,235,245,0.35)' }}>
+              <p style={{ fontSize: '12px', color: 'var(--label-tertiary)' }}>
                 Updated {formatDistanceToNow(new Date(localLead.updated_at), { addSuffix: true })}
               </p>
             </div>
@@ -416,9 +416,9 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
           {activeTab === 'activity' && (
             <div style={{ padding: '20px' }}>
               {checkinsLoading ? (
-                <p style={{ fontSize: '14px', color: 'rgba(235,235,245,0.4)' }}>Loading…</p>
+                <p style={{ fontSize: '14px', color: 'var(--label-tertiary)' }}>Loading…</p>
               ) : checkins.length === 0 ? (
-                <p style={{ fontSize: '14px', color: 'rgba(235,235,245,0.4)' }}>No check-ins yet for this lead.</p>
+                <p style={{ fontSize: '14px', color: 'var(--label-tertiary)' }}>No check-ins yet for this lead.</p>
               ) : (
                 <div className="relative pl-5">
                   <div className="absolute bottom-2 left-[6px] top-2 w-px bg-white/[0.08]" />
@@ -428,7 +428,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                         className="absolute -left-[18px] top-0.5 h-2 w-2 rounded-full"
                         style={{ backgroundColor: CHECKIN_TYPE_COLOR[c.type] }}
                       />
-                      <p style={{ fontSize: '12px', color: 'rgba(235,235,245,0.35)' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--label-tertiary)' }}>
                         {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })} · {c.user_name}
                       </p>
                       <div className="mt-1 flex items-center gap-1.5">
@@ -446,7 +446,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                           {c.type.replace('_', ' ')}
                         </span>
                         {c.remarks && (
-                          <span style={{ fontSize: '13px', color: 'rgba(235,235,245,0.6)' }}>{c.remarks}</span>
+                          <span style={{ fontSize: '13px', color: 'var(--label-secondary)' }}>{c.remarks}</span>
                         )}
                       </div>
                     </div>

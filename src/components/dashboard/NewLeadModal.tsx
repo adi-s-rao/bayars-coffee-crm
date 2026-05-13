@@ -24,15 +24,15 @@ const POC_REGEX = /^\+?[0-9]{10,15}$/
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(118,118,128,0.12)',
+  background: 'var(--bg-input)',
   borderRadius: '10px',
   border: 'none',
   padding: '12px 14px',
   fontSize: '15px',
-  color: '#FFF',
+  color: 'var(--label-primary)',
   outline: 'none',
   boxSizing: 'border-box',
-  colorScheme: 'dark',
+  fontFamily: 'inherit',
 }
 
 const labelStyle: React.CSSProperties = {
@@ -42,7 +42,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
-  color: 'rgba(235,235,245,0.4)',
+  color: 'var(--label-tertiary)',
 }
 
 export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
@@ -149,14 +149,14 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
 
       <div
         className="relative z-10 w-full overflow-y-auto md:mx-4 md:max-w-md md:rounded-3xl"
-        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '92vh' }}
+        style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '92vh' }}
       >
         {/* Drag handle */}
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
         <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>New Lead</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>New Lead</h2>
           <button
             type="button"
             onClick={onClose}

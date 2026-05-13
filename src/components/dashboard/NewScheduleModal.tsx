@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, Search, X } from 'lucide-react'
-import { format } from 'date-fns'
 import { toast } from 'sonner'
 import type { CheckInType, Lead } from '@/types'
+import DateTimePicker from '@/components/ui/DateTimePicker'
 
 const VISIT_TYPES: { value: CheckInType; label: string }[] = [
   { value: 'visit',    label: 'Visit' },
@@ -37,15 +37,15 @@ interface Props {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(118,118,128,0.12)',
+  background: 'var(--bg-input)',
   borderRadius: '10px',
   border: 'none',
   padding: '12px 14px',
   fontSize: '15px',
-  color: '#FFF',
+  color: 'var(--label-primary)',
   outline: 'none',
   boxSizing: 'border-box',
-  colorScheme: 'dark',
+  fontFamily: 'inherit',
 }
 
 export default function NewScheduleModal({ isOpen, onClose, selectedDate, onScheduled }: Props) {
@@ -54,8 +54,9 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
   const [search, setSearch] = useState('')
   const [pickedLead, setPickedLead] = useState<Lead | null>(null)
   const [visitType, setVisitType] = useState<CheckInType>('visit')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('09:00')
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [timePickerOpen, setTimePickerOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -68,11 +69,13 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
 
   useEffect(() => {
     if (!isOpen) return
-    setDate(format(selectedDate ?? new Date(), 'yyyy-MM-dd'))
+    const d = new Date(selectedDate ?? new Date())
+    d.setHours(9, 0, 0, 0)
+    setScheduledDate(d)
     setLeadsLoading(true)
     fetch('/api/leads')
       .then(r => r.json())
-      .then((d: { leads: Lead[] }) => setAllLeads(d.leads ?? []))
+      .then((data: { leads: Lead[] }) => setAllLeads(data.leads ?? []))
       .catch(() => setAllLeads([]))
       .finally(() => setLeadsLoading(false))
   }, [isOpen, selectedDate])
@@ -84,16 +87,15 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
   )
 
   async function handleSubmit() {
-    if (!pickedLead || !date) return
+    if (!pickedLead || !scheduledDate) return
     setSubmitting(true)
     setError('')
     try {
-      const scheduledDateTime = new Date(`${date}T${time || '09:00'}`)
       const res = await fetch(`/api/leads/${pickedLead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          scheduled_date: scheduledDateTime.toISOString(),
+          scheduled_date: scheduledDate.toISOString(),
           scheduled_type: visitType,
           ...(notes.trim() ? { remarks: notes.trim() } : {}),
         }),
@@ -118,24 +120,24 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
         className="relative z-10 w-full overflow-y-auto md:mx-4 md:max-w-md md:rounded-3xl"
-        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '90vh' }}
+        style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '90vh' }}
       >
         {/* Drag handle */}
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
         <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Schedule Visit</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>Schedule Visit</h2>
           <button
             type="button"
             onClick={onClose}
             className="transition-colors active:scale-[0.92]"
             style={{
-              background: 'rgba(118,118,128,0.15)',
+              background: 'var(--bg-input)',
               border: 'none',
               borderRadius: '10px',
               padding: '8px',
-              color: 'rgba(235,235,245,0.6)',
+              color: 'var(--label-secondary)',
               cursor: 'pointer',
             }}
           >
@@ -152,7 +154,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              color: 'rgba(235,235,245,0.4)',
+              color: 'var(--label-tertiary)',
             }}
           >
             Select Lead *
@@ -177,11 +179,11 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
                   flexShrink: 0,
                 }}
               />
-              <span style={{ flex: 1, fontSize: '15px', color: '#FFF' }}>{pickedLead.cafe_name}</span>
+              <span style={{ flex: 1, fontSize: '15px', color: 'var(--label-primary)' }}>{pickedLead.cafe_name}</span>
               <button
                 type="button"
                 onClick={() => setPickedLead(null)}
-                style={{ color: 'rgba(235,235,245,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                style={{ color: 'var(--label-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 <X size={14} />
               </button>
@@ -196,7 +198,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
                     left: '14px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: 'rgba(235,235,245,0.35)',
+                    color: 'var(--label-tertiary)',
                     pointerEvents: 'none',
                   }}
                 />
@@ -218,9 +220,9 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
                 }}
               >
                 {leadsLoading ? (
-                  <p style={{ padding: '12px 14px', fontSize: '13px', color: 'rgba(235,235,245,0.4)' }}>Loading…</p>
+                  <p style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--label-tertiary)' }}>Loading…</p>
                 ) : filteredLeads.length === 0 ? (
-                  <p style={{ padding: '12px 14px', fontSize: '13px', color: 'rgba(235,235,245,0.4)' }}>No leads found</p>
+                  <p style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--label-tertiary)' }}>No leads found</p>
                 ) : (
                   filteredLeads.map(l => (
                     <button
@@ -239,7 +241,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
                           flexShrink: 0,
                         }}
                       />
-                      <span style={{ flex: 1, fontSize: '14px', color: '#FFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ flex: 1, fontSize: '14px', color: 'var(--label-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {l.cafe_name}
                       </span>
                       <span
@@ -279,7 +281,8 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
                 border: 'none',
                 cursor: 'pointer',
                 background: visitType === value ? '#D97706' : 'rgba(118,118,128,0.2)',
-                color: visitType === value ? '#FFF' : 'rgba(235,235,245,0.6)',
+                color: visitType === value ? '#FFF' : 'var(--label-secondary)',
+                fontFamily: 'inherit',
               }}
             >
               {label}
@@ -287,66 +290,42 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
           ))}
         </div>
 
-        {/* Date/Time card */}
-        <div
-          style={{
-            background: 'rgba(118,118,128,0.12)',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            marginBottom: '16px',
-          }}
-        >
-          <div
-            style={{
-              padding: '14px 16px',
-              borderBottom: '0.5px solid rgba(84,84,88,0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ fontSize: '17px', color: '#FFF' }}>Date</span>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#D97706',
-                fontSize: '17px',
-                textAlign: 'right',
-                outline: 'none',
-                colorScheme: 'dark',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
-          <div
-            style={{
-              padding: '14px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ fontSize: '17px', color: '#FFF' }}>Time</span>
-            <input
-              type="time"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#D97706',
-                fontSize: '17px',
-                textAlign: 'right',
-                outline: 'none',
-                colorScheme: 'dark',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
+        {/* Date picker */}
+        <div style={{ marginBottom: '10px' }}>
+          <DateTimePicker
+            value={scheduledDate}
+            onChange={d => setScheduledDate(prev => {
+              if (!prev) return d
+              const merged = new Date(d)
+              merged.setHours(prev.getHours(), prev.getMinutes(), 0, 0)
+              return merged
+            })}
+            mode="date"
+            label="Date"
+            placeholder="Select date"
+            isOpen={datePickerOpen}
+            onOpen={() => setDatePickerOpen(true)}
+            onClose={() => setDatePickerOpen(false)}
+          />
+        </div>
+
+        {/* Time picker */}
+        <div style={{ marginBottom: '16px' }}>
+          <DateTimePicker
+            value={scheduledDate}
+            onChange={d => setScheduledDate(prev => {
+              if (!prev) return d
+              const merged = new Date(prev)
+              merged.setHours(d.getHours(), d.getMinutes(), 0, 0)
+              return merged
+            })}
+            mode="time"
+            label="Time"
+            placeholder="Select time"
+            isOpen={timePickerOpen}
+            onOpen={() => setTimePickerOpen(true)}
+            onClose={() => setTimePickerOpen(false)}
+          />
         </div>
 
         {/* Notes */}
@@ -358,7 +337,7 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              color: 'rgba(235,235,245,0.4)',
+              color: 'var(--label-tertiary)',
             }}
           >
             Notes
@@ -377,8 +356,8 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
 
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!pickedLead || !date || submitting}
+          onClick={() => void handleSubmit()}
+          disabled={!pickedLead || !scheduledDate || submitting}
           className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
           style={{
             width: '100%',
@@ -389,8 +368,9 @@ export default function NewScheduleModal({ isOpen, onClose, selectedDate, onSche
             fontSize: '17px',
             fontWeight: 600,
             border: 'none',
-            cursor: !pickedLead || !date || submitting ? 'not-allowed' : 'pointer',
-            opacity: !pickedLead || !date || submitting ? 0.5 : 1,
+            cursor: !pickedLead || !scheduledDate || submitting ? 'not-allowed' : 'pointer',
+            opacity: !pickedLead || !scheduledDate || submitting ? 0.5 : 1,
+            fontFamily: 'inherit',
           }}
         >
           {submitting && <Loader2 size={18} className="animate-spin" />}

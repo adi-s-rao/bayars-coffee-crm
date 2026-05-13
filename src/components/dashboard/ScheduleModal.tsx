@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CheckInType, Lead, Profile } from '@/types'
+import DateTimePicker from '@/components/ui/DateTimePicker'
 
 interface Props {
   lead: Lead
@@ -19,23 +20,11 @@ const VISIT_TYPES: { value: CheckInType; label: string }[] = [
   { value: 'workshop', label: 'Workshop' },
 ]
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  background: 'rgba(118,118,128,0.12)',
-  borderRadius: '10px',
-  border: 'none',
-  padding: '12px 14px',
-  fontSize: '15px',
-  color: '#FFF',
-  outline: 'none',
-  boxSizing: 'border-box',
-  colorScheme: 'dark',
-}
-
 export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Props) {
   const [visitType, setVisitType] = useState<CheckInType>('visit')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [time, setTime] = useState('09:00')
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [timePickerOpen, setTimePickerOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -48,16 +37,13 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
 
   if (!isOpen) return null
 
-  const today = new Date().toISOString().split('T')[0]
-
   async function handleSubmit() {
-    if (!date) return
+    if (!scheduledDate) return
     setSubmitting(true)
     setError('')
     try {
-      const scheduledDateTime = new Date(`${date}T${time || '09:00'}`)
       const body = {
-        scheduled_date: scheduledDateTime.toISOString(),
+        scheduled_date: scheduledDate.toISOString(),
         scheduled_type: visitType,
         ...(notes.trim() ? { remarks: notes.trim() } : {}),
       }
@@ -82,41 +68,52 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--bg-input)',
+    borderRadius: '10px',
+    border: 'none',
+    padding: '12px 14px',
+    fontSize: '15px',
+    color: 'var(--label-primary)',
+    outline: 'none',
+    boxSizing: 'border-box',
+    resize: 'none' as const,
+    fontFamily: 'inherit',
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
 
       <div
-        className="relative z-10 w-full md:mx-4 md:max-w-md md:rounded-3xl"
-        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px' }}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '448px',
+          background: 'var(--bg-card)',
+          borderRadius: '24px 24px 0 0',
+          padding: '24px',
+        }}
       >
-        {/* Drag handle */}
-        <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
+        <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} />
 
-        {/* Header */}
         <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Schedule Visit</h2>
-            <p style={{ marginTop: '2px', fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>{lead.cafe_name}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>Schedule Visit</h2>
+            <p style={{ marginTop: '2px', fontSize: '15px', color: 'var(--label-secondary)' }}>{lead.cafe_name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="transition-colors active:scale-[0.92]"
-            style={{
-              background: 'rgba(118,118,128,0.15)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '8px',
-              color: 'rgba(235,235,245,0.6)',
-              cursor: 'pointer',
-            }}
+            style={{ background: 'var(--bg-input)', border: 'none', borderRadius: '10px', padding: '8px', color: 'var(--label-secondary)', cursor: 'pointer' }}
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Visit type selector */}
+        {/* Visit type */}
         <div style={{ marginBottom: '20px', display: 'flex', gap: '8px' }}>
           {VISIT_TYPES.map(({ value, label }) => (
             <button
@@ -132,7 +129,8 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
                 border: 'none',
                 cursor: 'pointer',
                 background: visitType === value ? '#D97706' : 'rgba(118,118,128,0.2)',
-                color: visitType === value ? '#FFF' : 'rgba(235,235,245,0.6)',
+                color: visitType === value ? '#FFF' : 'var(--label-secondary)',
+                fontFamily: 'inherit',
               }}
             >
               {label}
@@ -140,83 +138,48 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
           ))}
         </div>
 
-        {/* Date/Time card */}
-        <div
-          style={{
-            background: 'rgba(118,118,128,0.12)',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            marginBottom: '16px',
-          }}
-        >
-          {/* Date row */}
-          <div
-            style={{
-              padding: '14px 16px',
-              borderBottom: '0.5px solid rgba(84,84,88,0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ fontSize: '17px', color: '#FFF' }}>Date</span>
-            <input
-              type="date"
-              value={date}
-              min={today}
-              onChange={e => setDate(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#D97706',
-                fontSize: '17px',
-                textAlign: 'right',
-                outline: 'none',
-                colorScheme: 'dark',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
-          {/* Time row */}
-          <div
-            style={{
-              padding: '14px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ fontSize: '17px', color: '#FFF' }}>Time</span>
-            <input
-              type="time"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#D97706',
-                fontSize: '17px',
-                textAlign: 'right',
-                outline: 'none',
-                colorScheme: 'dark',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
+        {/* Date picker */}
+        <div style={{ marginBottom: '10px' }}>
+          <DateTimePicker
+            value={scheduledDate}
+            onChange={d => setScheduledDate(prev => {
+              if (!prev) return d
+              // keep existing time when changing date
+              const merged = new Date(d)
+              merged.setHours(prev.getHours(), prev.getMinutes(), 0, 0)
+              return merged
+            })}
+            mode="date"
+            label="Date"
+            placeholder="Select date"
+            isOpen={datePickerOpen}
+            onOpen={() => setDatePickerOpen(true)}
+            onClose={() => setDatePickerOpen(false)}
+          />
+        </div>
+
+        {/* Time picker */}
+        <div style={{ marginBottom: '16px' }}>
+          <DateTimePicker
+            value={scheduledDate}
+            onChange={d => setScheduledDate(prev => {
+              if (!prev) return d
+              const merged = new Date(prev)
+              merged.setHours(d.getHours(), d.getMinutes(), 0, 0)
+              return merged
+            })}
+            mode="time"
+            label="Time"
+            placeholder="Select time"
+            isOpen={timePickerOpen}
+            onOpen={() => setTimePickerOpen(true)}
+            onClose={() => setTimePickerOpen(false)}
+          />
         </div>
 
         {/* Notes */}
         <div style={{ marginBottom: '20px' }}>
-          <p
-            style={{
-              marginBottom: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: 'rgba(235,235,245,0.4)',
-            }}
-          >
+          <p style={{ marginBottom: '6px', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label-tertiary)' }}>
             Notes
           </p>
           <textarea
@@ -224,19 +187,17 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
             placeholder="Add notes…"
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            style={{ ...inputStyle, resize: 'none' }}
+            style={inputStyle}
             className="placeholder:text-[rgba(235,235,245,0.3)]"
           />
         </div>
 
-        {error && (
-          <p style={{ marginBottom: '12px', fontSize: '13px', color: '#FF453A' }}>{error}</p>
-        )}
+        {error && <p style={{ marginBottom: '12px', fontSize: '13px', color: '#FF453A' }}>{error}</p>}
 
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!date || submitting}
+          onClick={() => void handleSubmit()}
+          disabled={!scheduledDate || submitting}
           className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
           style={{
             width: '100%',
@@ -247,8 +208,9 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
             fontSize: '17px',
             fontWeight: 600,
             border: 'none',
-            cursor: !date || submitting ? 'not-allowed' : 'pointer',
-            opacity: !date || submitting ? 0.5 : 1,
+            cursor: !scheduledDate || submitting ? 'not-allowed' : 'pointer',
+            opacity: !scheduledDate || submitting ? 0.5 : 1,
+            fontFamily: 'inherit',
           }}
         >
           {submitting && <Loader2 size={18} className="animate-spin" />}

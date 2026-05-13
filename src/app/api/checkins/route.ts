@@ -72,12 +72,16 @@ export async function POST(request: NextRequest) {
 
     let distanceKm: number | null = null
 
-    // Calculate distance from previous checkin (skip for start_day)
+    // Calculate distance from previous checkin TODAY only (skip for start_day)
     if (body.type !== 'start_day' && body.latitude != null && body.longitude != null) {
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+
       const { data: prev } = await admin
         .from('checkins')
-        .select('latitude, longitude')
+        .select('latitude, longitude, created_at')
         .eq('user_id', body.user_id)
+        .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
         .single()

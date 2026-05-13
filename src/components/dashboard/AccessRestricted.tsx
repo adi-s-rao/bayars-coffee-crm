@@ -28,8 +28,8 @@ export default function AccessRestricted() {
         <Lock size={28} style={{ color: '#FF453A' }} />
       </div>
       <div style={{ textAlign: 'center' }}>
-        <p style={{ fontSize: '17px', fontWeight: 600, color: '#FFF' }}>Manager Access Only</p>
-        <p style={{ marginTop: '6px', fontSize: '15px', color: 'rgba(235,235,245,0.45)' }}>
+        <p style={{ fontSize: '17px', fontWeight: 600, color: 'var(--label-primary)' }}>Manager Access Only</p>
+        <p style={{ marginTop: '6px', fontSize: '15px', color: 'var(--label-tertiary)' }}>
           Reports are only available to managers.
         </p>
       </div>

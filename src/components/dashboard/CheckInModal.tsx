@@ -40,14 +40,15 @@ function haversineMetres(
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(118,118,128,0.12)',
+  background: 'var(--bg-input)',
   borderRadius: '10px',
   border: 'none',
   padding: '12px 14px',
   fontSize: '15px',
-  color: '#FFF',
+  color: 'var(--label-primary)',
   outline: 'none',
   boxSizing: 'border-box',
+  fontFamily: 'inherit',
 }
 
 export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profile }: Props) {
@@ -152,7 +153,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
 
       <div
         className="relative z-10 w-full md:mx-4 md:max-w-md md:rounded-3xl"
-        style={{ background: '#1C1C1E', borderRadius: '24px 24px 0 0', padding: '24px' }}
+        style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px' }}
       >
         {/* Drag handle */}
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
@@ -160,9 +161,9 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         {/* Header */}
         <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Check In</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>Check In</h2>
             <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <p style={{ fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>{lead.cafe_name}</p>
+              <p style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>{lead.cafe_name}</p>
               <span
                 style={{
                   borderRadius: '6px',
@@ -211,7 +212,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
                 border: 'none',
                 cursor: 'pointer',
                 background: checkinType === t ? '#D97706' : 'rgba(118,118,128,0.2)',
-                color: checkinType === t ? '#FFF' : 'rgba(235,235,245,0.6)',
+                color: checkinType === t ? '#FFF' : 'var(--label-secondary)',
               }}
             >
               {t}
@@ -248,7 +249,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
                 border: '0.5px solid rgba(255,255,255,0.1)',
                 borderRadius: '10px',
                 fontSize: '15px',
-                color: 'rgba(235,235,245,0.6)',
+                color: 'var(--label-secondary)',
                 cursor: 'pointer',
                 opacity: gpsLoading ? 0.5 : 1,
               }}
@@ -340,7 +341,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         {/* Beans toggle */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '15px', color: 'rgba(235,235,245,0.6)' }}>Beans used?</span>
+            <span style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>Beans used?</span>
             <button
               type="button"
               onClick={() => setBeansUsed(v => !v)}

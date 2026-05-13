@@ -38,21 +38,46 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') ?? 'week'
-    const since = getPeriodStart(period)
+    const repId = searchParams.get('repId') ?? null
+    const startDate = searchParams.get('startDate')
+    const endDate = searchParams.get('endDate')
 
-    const [leadsResult, checkInsResult, newLeadsResult] = await Promise.all([
-      admin.from('leads').select('status'),
-      admin
-        .from('checkins')
-        .select('user_id, user_name, type, distance_from_previous_km')
-        .gte('created_at', since),
-      admin
-        .from('leads')
-        .select('created_by')
-        .gte('created_at', since),
-    ])
+    let since: string
+    let until: string | null = null
 
-    const allLeads = (leadsResult.data ?? []) as { status: string }[]
+    if (startDate && endDate) {
+      since = new Date(startDate).toISOString()
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      until = end.toISOString()
+    } else {
+      since = getPeriodStart(period)
+    }
+
+    // Leads query — not filtered by period (pipeline is always total)
+    let leadsQuery = admin.from('leads').select('status, created_by, created_at')
+    if (repId) leadsQuery = leadsQuery.eq('created_by', repId)
+    const leadsResult = await leadsQuery
+
+    // Check-ins in period
+    let checkInsQuery = admin
+      .from('checkins')
+      .select('user_id, user_name, type, distance_from_previous_km')
+      .gte('created_at', since)
+    if (until) checkInsQuery = checkInsQuery.lte('created_at', until)
+    if (repId) checkInsQuery = checkInsQuery.eq('user_id', repId)
+    const checkInsResult = await checkInsQuery
+
+    // New leads in period
+    let newLeadsQuery = admin
+      .from('leads')
+      .select('created_by')
+      .gte('created_at', since)
+    if (until) newLeadsQuery = newLeadsQuery.lte('created_at', until)
+    if (repId) newLeadsQuery = newLeadsQuery.eq('created_by', repId)
+    const newLeadsResult = await newLeadsQuery
+
+    const allLeads = (leadsResult.data ?? []) as { status: string; created_by: string }[]
     const allCheckIns = (checkInsResult.data ?? []) as {
       user_id: string
       user_name: string

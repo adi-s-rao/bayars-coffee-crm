@@ -1,9 +1,11 @@
 'use client'
 
+import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
 import { MapPin, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/contexts/ThemeContext'
 import type { Profile } from '@/types'
 
 interface Props {
@@ -14,46 +16,41 @@ interface Props {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(118,118,128,0.12)',
+  background: 'var(--bg-input)',
   borderRadius: '10px',
   border: 'none',
   padding: '12px 14px',
   fontSize: '15px',
-  color: '#FFF',
+  color: 'var(--label-primary)',
   outline: 'none',
   boxSizing: 'border-box',
+  fontFamily: 'inherit',
 }
 
-export default function SettingsModal({ isOpen, onClose, profile }: Props) {
+function SettingsContent({ onClose, profile }: { onClose: () => void; profile: Profile }) {
+  const { theme, toggleTheme } = useTheme()
   const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
+  const [newPassword, setNewPassword]         = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordUpdating, setPasswordUpdating] = useState(false)
-  const [passwordError, setPasswordError] = useState('')
+  const [passwordError, setPasswordError]     = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
-
-  const [darkMode, setDarkMode] = useState(true)
 
   type LocStatus = 'granted' | 'denied' | 'prompt' | 'checking'
   const [locationStatus, setLocationStatus] = useState<LocStatus>('checking')
 
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    if (isOpen) document.addEventListener('keydown', handleEsc)
-    return () => document.removeEventListener('keydown', handleEsc)
-  }, [isOpen, onClose])
-
-  useEffect(() => {
-    if (!isOpen) return
-    const stored = localStorage.getItem('bayars-theme')
-    setDarkMode(stored !== 'light')
     navigator.permissions
       .query({ name: 'geolocation' as PermissionName })
       .then(r => setLocationStatus(r.state as LocStatus))
       .catch(() => setLocationStatus('prompt'))
-  }, [isOpen])
+  }, [])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
 
   async function handlePasswordUpdate() {
     if (!newPassword || !confirmPassword) {
@@ -78,6 +75,7 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
         setPasswordError(error.message)
       } else {
         setPasswordSuccess(true)
+        toast.success('Password updated!')
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
@@ -86,15 +84,6 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
       setPasswordError('Failed to update password')
     } finally {
       setPasswordUpdating(false)
-    }
-  }
-
-  function handleDarkModeToggle() {
-    if (darkMode) {
-      toast.info('Light mode coming soon')
-    } else {
-      setDarkMode(true)
-      localStorage.setItem('bayars-theme', 'dark')
     }
   }
 
@@ -110,10 +99,10 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
     )
   }
 
-  const locBadge = (status: LocStatus): { label: string; bg: string; color: string } => {
-    if (status === 'granted') return { label: 'Granted', bg: 'rgba(48,209,88,0.15)', color: '#30D158' }
-    if (status === 'denied')  return { label: 'Denied',  bg: 'rgba(255,69,58,0.15)', color: '#FF453A' }
-    return { label: 'Unknown', bg: 'rgba(118,118,128,0.2)', color: 'rgba(235,235,245,0.6)' }
+  const locBadge = (status: LocStatus) => {
+    if (status === 'granted') return { label: 'Granted', bg: 'rgba(48,209,88,0.15)',  color: '#30D158' }
+    if (status === 'denied')  return { label: 'Denied',  bg: 'rgba(255,69,58,0.15)',  color: '#FF453A' }
+    return { label: 'Unknown', bg: 'var(--bg-input)', color: 'var(--label-secondary)' }
   }
   const badge = locBadge(locationStatus)
 
@@ -123,38 +112,43 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: 'rgba(235,235,245,0.4)',
+    color: 'var(--label-tertiary)',
   }
 
+  const lightMode = theme === 'light'
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
       <div
-        className="relative z-10 w-full max-w-md overflow-y-auto"
         style={{
-          background: '#1C1C1E',
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '448px',
+          overflowY: 'auto',
+          background: 'var(--bg-card)',
           borderRadius: '24px',
           padding: '24px',
           maxHeight: '90vh',
-          border: '0.5px solid rgba(84,84,88,0.65)',
+          border: '0.5px solid var(--separator)',
         }}
       >
         {/* Header */}
         <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#FFF' }}>Settings</h2>
-            <p style={{ marginTop: '2px', fontSize: '13px', color: 'rgba(235,235,245,0.4)' }}>{profile.full_name}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>Settings</h2>
+            <p style={{ marginTop: '2px', fontSize: '13px', color: 'var(--label-tertiary)' }}>{profile.full_name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="transition-colors active:scale-[0.92]"
             style={{
-              background: 'rgba(118,118,128,0.15)',
+              background: 'var(--bg-input)',
               border: 'none',
               borderRadius: '10px',
               padding: '8px',
-              color: 'rgba(235,235,245,0.6)',
+              color: 'var(--label-secondary)',
               cursor: 'pointer',
             }}
           >
@@ -198,9 +192,8 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
             )}
             <button
               type="button"
-              onClick={handlePasswordUpdate}
+              onClick={() => void handlePasswordUpdate()}
               disabled={passwordUpdating}
-              className="flex items-center justify-center transition-all active:scale-[0.98]"
               style={{
                 width: '100%',
                 height: '50px',
@@ -212,6 +205,7 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
                 border: 'none',
                 cursor: passwordUpdating ? 'not-allowed' : 'pointer',
                 opacity: passwordUpdating ? 0.5 : 1,
+                fontFamily: 'inherit',
               }}
             >
               {passwordUpdating ? 'Updating…' : 'Update Password'}
@@ -227,15 +221,15 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(118,118,128,0.08)',
+              background: 'var(--bg-input)',
               borderRadius: '12px',
               padding: '14px 16px',
             }}
           >
-            <span style={{ fontSize: '15px', color: '#FFF' }}>Dark Mode</span>
+            <span style={{ fontSize: '15px', color: 'var(--label-primary)' }}>Light Mode</span>
             <button
               type="button"
-              onClick={handleDarkModeToggle}
+              onClick={toggleTheme}
               style={{
                 position: 'relative',
                 width: '50px',
@@ -243,7 +237,7 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
                 borderRadius: '14px',
                 border: 'none',
                 cursor: 'pointer',
-                background: darkMode ? '#D97706' : 'rgba(118,118,128,0.4)',
+                background: lightMode ? '#D97706' : 'rgba(118,118,128,0.4)',
                 transition: 'background 0.2s ease',
               }}
             >
@@ -251,7 +245,7 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
                 style={{
                   position: 'absolute',
                   top: '3px',
-                  left: darkMode ? '25px' : '3px',
+                  left: lightMode ? '25px' : '3px',
                   width: '22px',
                   height: '22px',
                   borderRadius: '50%',
@@ -272,14 +266,14 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(118,118,128,0.08)',
+              background: 'var(--bg-input)',
               borderRadius: '12px',
               padding: '14px 16px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MapPin size={15} style={{ color: 'rgba(235,235,245,0.6)' }} />
-              <span style={{ fontSize: '15px', color: '#FFF' }}>Location Access</span>
+              <MapPin size={15} style={{ color: 'var(--label-secondary)' }} />
+              <span style={{ fontSize: '15px', color: 'var(--label-primary)' }}>Location Access</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span
@@ -298,15 +292,15 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
                 <button
                   type="button"
                   onClick={requestLocation}
-                  className="transition-colors hover:text-white"
                   style={{
-                    background: 'rgba(118,118,128,0.2)',
+                    background: 'var(--bg-input)',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '6px 12px',
                     fontSize: '12px',
-                    color: 'rgba(235,235,245,0.6)',
+                    color: 'var(--label-secondary)',
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Request
@@ -317,5 +311,14 @@ export default function SettingsModal({ isOpen, onClose, profile }: Props) {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SettingsModal({ isOpen, onClose, profile }: Props) {
+  if (!isOpen) return null
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <SettingsContent onClose={onClose} profile={profile} />,
+    document.body
   )
 }

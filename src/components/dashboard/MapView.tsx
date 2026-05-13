@@ -74,8 +74,8 @@ export default function MapView({ leads, profile }: Props) {
       {/* Filter pills */}
       <div
         style={{
-          background: '#000',
-          borderBottom: '0.5px solid rgba(84,84,88,0.65)',
+          background: 'var(--bg-page)',
+          borderBottom: '0.5px solid var(--separator)',
           padding: '10px 16px',
           display: 'flex',
           gap: '8px',
