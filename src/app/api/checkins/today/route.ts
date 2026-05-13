@@ -18,24 +18,26 @@ export async function GET() {
 
     if (error) {
       console.error('checkins/today query error:', error.message)
-      return NextResponse.json({ checkInCount: 0, totalKm: 0 })
+      return NextResponse.json({ checkInCount: 0, totalKm: 0, hasStartDay: false })
     }
 
     const rows = (data ?? []) as { type: string; distance_from_previous_km: number | null }[]
 
-    const VISIT_TYPES = new Set(['visit', 'demo', 'workshop'])
+    const VISIT_TYPES = new Set(['visit', 'demo', 'workshop', 'new_lead'])
     const checkInCount = rows.filter(r => VISIT_TYPES.has(r.type)).length
-    const totalKm = (data ?? []).reduce(
-      (sum, c) => sum + ((c as { distance_from_previous_km: number | null }).distance_from_previous_km ?? 0),
+    const hasStartDay = rows.some(r => r.type === 'start_day')
+    const totalKm = rows.reduce(
+      (sum, c) => sum + (c.distance_from_previous_km ?? 0),
       0
     )
 
     return NextResponse.json({
       checkInCount,
       totalKm: Math.round(totalKm * 10) / 10,
+      hasStartDay,
     })
   } catch (e) {
     console.error('checkins/today error:', e)
-    return NextResponse.json({ checkInCount: 0, totalKm: 0 })
+    return NextResponse.json({ checkInCount: 0, totalKm: 0, hasStartDay: false })
   }
 }

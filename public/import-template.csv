@@ -1,0 +1,3 @@
+cafe_name,status,location_address,poc_name,poc_contact,coffee_machine,current_bean_brand,bean_usage_kg,cappuccino_price,sample_name,sample_quantity_grams,remarks
+Blue Tokai Cafe,cold_lead,"Dubai Marina, Dubai",Ahmed Ali,+971501234567,La Marzocco Linea,Local Brand,5,18,Bayar Espresso Blend,250,Interested in tasting
+Artisan Coffee Co,hot_lead,"Business Bay, Dubai",Sara Khan,+971509876543,Slayer One,,10,22,,,"Follow up next week"

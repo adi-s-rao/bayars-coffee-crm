@@ -1,14 +1,24 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { type NextRequest, NextResponse } from 'next/server'
-import type { LeadStatus, Profile } from '@/types'
+import type { LeadStatus } from '@/types'
 
-const VALID_STATUSES: LeadStatus[] = [
-  'cold_lead', 'hot_lead', 'demo_scheduled', 'customer', 'competitor',
-]
+const VALID_STATUSES: LeadStatus[] = ['cold_lead', 'hot_lead', 'customer', 'competitor']
 
 function isValidStatus(s: string): s is LeadStatus {
   return (VALID_STATUSES as string[]).includes(s)
+}
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(a))
 }
 
 export async function GET(request: NextRequest) {
@@ -16,15 +26,6 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const p = profile as Pick<Profile, 'role'> | null
-    const isManager = p?.role === 'manager'
 
     const { searchParams } = new URL(request.url)
     const page = Math.max(0, parseInt(searchParams.get('page') ?? '0'))
@@ -39,9 +40,6 @@ export async function GET(request: NextRequest) {
       .order('updated_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1)
 
-    if (!isManager) {
-      query = query.eq('created_by', user.id)
-    }
     if (search) {
       query = query.ilike('cafe_name', `%${search}%`)
     }
@@ -67,19 +65,12 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    console.log('LEADS POST - auth check:', {
-      userId: user?.id,
-      authError: authError?.message
-    })
-
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    console.log('LEADS POST - request body:', JSON.stringify(body))
 
-    // Upsert profile first using service role
     const adminClient = createAdminClient()
     const { error: profileError } = await adminClient
       .from('profiles')
@@ -91,10 +82,9 @@ export async function POST(request: NextRequest) {
         role: 'rep',
       }, { onConflict: 'id', ignoreDuplicates: true })
 
-    console.log('LEADS POST - profile upsert:', {
-      error: profileError?.message,
-      code: profileError?.code
-    })
+    if (profileError) {
+      console.error('LEADS POST - profile upsert error:', profileError.message)
+    }
 
     const leadData = {
       created_by: user.id,
@@ -105,10 +95,14 @@ export async function POST(request: NextRequest) {
       location_address: body.location_address ?? null,
       poc_name: body.poc_name ?? null,
       poc_contact: body.poc_contact ?? null,
+      coffee_machine: body.coffee_machine ?? null,
+      current_bean_brand: body.current_bean_brand ?? null,
+      bean_usage_kg: body.bean_usage_kg ?? null,
+      cappuccino_price: body.cappuccino_price ?? null,
       remarks: body.remarks ?? null,
+      sample_name: body.sample_name ?? null,
+      sample_quantity_grams: body.sample_quantity_grams ?? null,
     }
-
-    console.log('LEADS POST - inserting lead:', JSON.stringify(leadData))
 
     const { data, error: insertError } = await adminClient
       .from('leads')
@@ -116,21 +110,50 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    console.log('LEADS POST - insert result:', {
-      data: data?.id,
-      error: insertError?.message,
-      code: insertError?.code,
-      details: insertError?.details,
-      hint: insertError?.hint
-    })
-
     if (insertError) {
       return NextResponse.json({
         error: insertError.message,
         code: insertError.code,
         details: insertError.details,
-        hint: insertError.hint
       }, { status: 500 })
+    }
+
+    // Auto-insert a new_lead checkin if GPS was provided
+    if (body.latitude != null && body.longitude != null) {
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+
+      const { data: prev } = await adminClient
+        .from('checkins')
+        .select('latitude, longitude')
+        .eq('user_id', user.id)
+        .gte('created_at', todayStart.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      const prevRow = prev as { latitude: number | null; longitude: number | null } | null
+      let distanceKm: number | null = null
+      if (prevRow?.latitude != null && prevRow?.longitude != null) {
+        distanceKm = Math.round(
+          haversineKm(prevRow.latitude, prevRow.longitude, body.latitude, body.longitude) * 100
+        ) / 100
+      }
+
+      const userName = user.user_metadata?.full_name as string | undefined
+        ?? user.email?.split('@')[0]
+        ?? 'User'
+
+      await adminClient.from('checkins').insert({
+        type: 'new_lead',
+        lead_id: data.id,
+        user_id: user.id,
+        user_name: userName,
+        latitude: body.latitude,
+        longitude: body.longitude,
+        distance_from_previous_km: distanceKm,
+        remarks: `New lead: ${body.cafe_name}`,
+      })
     }
 
     return NextResponse.json({ lead: data })
@@ -139,7 +162,6 @@ export async function POST(request: NextRequest) {
     console.error('LEADS POST - caught exception:', e)
     return NextResponse.json({
       error: e instanceof Error ? e.message : 'Unknown error',
-      stack: e instanceof Error ? e.stack : null
     }, { status: 500 })
   }
 }

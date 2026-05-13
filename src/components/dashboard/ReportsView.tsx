@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Activity, AlertTriangle, BarChart2, TrendingUp, Users } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart2, Coffee, TrendingUp, Users } from 'lucide-react'
 import type { Profile } from '@/types'
 import TeamView from './TeamView'
 
@@ -11,7 +11,6 @@ type ActiveTab = 'reports' | 'team'
 interface PipelineData {
   cold_lead: number
   hot_lead: number
-  demo_scheduled: number
   customer: number
   competitor: number
 }
@@ -22,6 +21,7 @@ interface RepStat {
   checkIns: number
   distanceKm: number
   newLeads: number
+  conversions: number
 }
 
 interface SummaryData {
@@ -29,6 +29,8 @@ interface SummaryData {
   newLeads: number
   customers: number
   checkIns: number
+  conversions: number
+  totalSampleGrams: number
   pipeline: PipelineData
   repStats: RepStat[]
 }
@@ -51,11 +53,10 @@ interface Rep {
 }
 
 const PIPELINE_META: { key: keyof PipelineData; label: string; color: string }[] = [
-  { key: 'cold_lead',      label: 'Cold Lead',  color: '#0A84FF' },
-  { key: 'hot_lead',       label: 'Hot Lead',   color: '#FF9F0A' },
-  { key: 'demo_scheduled', label: 'Demo',       color: '#D97706' },
-  { key: 'customer',       label: 'Customer',   color: '#30D158' },
-  { key: 'competitor',     label: 'Competitor', color: '#FF453A' },
+  { key: 'cold_lead',  label: 'Cold Lead',  color: '#0A84FF' },
+  { key: 'hot_lead',   label: 'Hot Lead',   color: '#FF9F0A' },
+  { key: 'customer',   label: 'Customer',   color: '#30D158' },
+  { key: 'competitor', label: 'Competitor', color: '#FF453A' },
 ]
 
 const AVATAR_COLORS = ['#0A84FF', '#FF9F0A', '#30D158', '#BF5AF2', '#FF453A', '#64D2FF']
@@ -341,10 +342,12 @@ export default function ReportsView({ profile }: Props) {
 
           {/* Stats Grid */}
           <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <StatCard label="Check-ins"   value={loading ? '—' : String(summary?.checkIns ?? 0)}   icon={<Activity size={16} color="#D97706" />} />
-            <StatCard label="New Leads"   value={loading ? '—' : String(summary?.newLeads ?? 0)}    icon={<TrendingUp size={16} color="#0A84FF" />} />
-            <StatCard label="Customers"   value={loading ? '—' : String(summary?.customers ?? 0)}   icon={<Users size={16} color="#30D158" />} />
-            <StatCard label="Total Leads" value={loading ? '—' : String(summary?.totalLeads ?? 0)}  icon={<BarChart2 size={16} color="#FF9F0A" />} />
+            <StatCard label="Check-ins"    value={loading ? '—' : String(summary?.checkIns ?? 0)}             icon={<Activity size={16} color="#D97706" />} />
+            <StatCard label="New Leads"    value={loading ? '—' : String(summary?.newLeads ?? 0)}              icon={<TrendingUp size={16} color="#0A84FF" />} />
+            <StatCard label="Customers"    value={loading ? '—' : String(summary?.customers ?? 0)}             icon={<Users size={16} color="#30D158" />} />
+            <StatCard label="Conversions"  value={loading ? '—' : String(summary?.conversions ?? 0)}           icon={<BarChart2 size={16} color="#FF9F0A" />} />
+            <StatCard label="Samples (g)"  value={loading ? '—' : String(summary?.totalSampleGrams ?? 0)}      icon={<Coffee size={16} color="#BF5AF2" />} />
+            <StatCard label="Total Leads"  value={loading ? '—' : String(summary?.totalLeads ?? 0)}            icon={<BarChart2 size={16} color="var(--label-tertiary)" />} />
           </div>
 
           {/* Pipeline Funnel */}
@@ -406,7 +409,11 @@ export default function ReportsView({ profile }: Props) {
                           <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--label-primary)' }}>{rep.checkIns}</p>
                           <p style={{ fontSize: '12px', color: 'var(--label-secondary)', marginTop: '2px' }}>check-ins</p>
                         </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '52px' }}>
+                        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '48px' }}>
+                          <p style={{ fontSize: '15px', fontWeight: 600, color: '#30D158' }}>{rep.conversions}</p>
+                          <p style={{ fontSize: '12px', color: 'var(--label-secondary)', marginTop: '2px' }}>converts</p>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '48px' }}>
                           <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--label-primary)' }}>{rep.distanceKm.toFixed(1)}</p>
                           <p style={{ fontSize: '12px', color: 'var(--label-secondary)', marginTop: '2px' }}>km</p>
                         </div>

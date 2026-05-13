@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { CheckInType } from '@/types'
 
-const VALID_TYPES: CheckInType[] = ['visit', 'demo', 'workshop', 'start_day', 'end_day']
+const VALID_TYPES: CheckInType[] = ['visit', 'demo', 'workshop', 'start_day', 'end_day', 'new_lead']
 
 function isValidType(t: string): t is CheckInType {
   return (VALID_TYPES as string[]).includes(t)
@@ -29,8 +29,6 @@ interface CheckInBody {
   user_id: string
   user_name: string
   remarks?: string
-  gate_pass_number?: string
-  beans_used?: boolean
   bean_brand?: string
   bean_amount_kg?: number
   geofence_flagged?: boolean
@@ -39,7 +37,6 @@ interface CheckInBody {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authenticated session
     const serverClient = await createClient()
     const { data: { user } } = await serverClient.auth.getUser()
     if (!user) {
@@ -52,15 +49,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid checkin type' }, { status: 400 })
     }
 
-    // Security: user can only log checkins for themselves
     if (body.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const admin = createAdminClient()
 
-    // Ensure profiles row exists before inserting — checkins.user_id has a
-    // FK → profiles(id). Same issue as leads: users pre-trigger have no row.
     await admin.from('profiles').upsert({
       id: user.id,
       email: user.email ?? '',
@@ -72,7 +66,6 @@ export async function POST(request: NextRequest) {
 
     let distanceKm: number | null = null
 
-    // Calculate distance from previous checkin TODAY only (skip for start_day)
     if (body.type !== 'start_day' && body.latitude != null && body.longitude != null) {
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
@@ -94,7 +87,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Prepend geofence flag to remarks when the rep checked in from outside the radius
     const flagPrefix = body.geofence_flagged && body.geofence_distance_m
       ? `[FLAGGED: ${body.geofence_distance_m}m away] `
       : ''
@@ -112,8 +104,6 @@ export async function POST(request: NextRequest) {
         user_id: body.user_id,
         user_name: body.user_name,
         remarks: finalRemarks,
-        gate_pass_number: body.gate_pass_number ?? null,
-        beans_used: body.beans_used ?? false,
         bean_brand: body.bean_brand ?? null,
         bean_amount_kg: body.bean_amount_kg ?? null,
         distance_from_previous_km: distanceKm,
@@ -125,8 +115,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // If this check-in is tied to a lead, bump updated_at so "Last visit"
-    // reflects the visit time, then return the refreshed lead to the client.
     let updatedLead = null
     if (body.lead_id && body.type !== 'start_day' && body.type !== 'end_day') {
       await admin

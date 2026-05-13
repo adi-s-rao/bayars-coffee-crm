@@ -1,178 +1,120 @@
-# Bayar's Coffee CRM — Runbook
+# Bayar's CRM — Runbook
 
-Error log and solutions encountered during development. Newest entries at the top of each section.
+## Database migrations
 
----
+Migrations live in `supabase/migrations/`. Run them in order via the Supabase dashboard SQL editor or the CLI:
 
-## Setup
+```bash
+supabase db push
+# or manually:
+supabase migration up
+```
 
-Project scaffolded with Next.js 16 (latest), TypeScript strict, Tailwind v4, shadcn/ui v4, pnpm 11.
+Migration files:
+- `001_initial_schema.sql` — baseline tables, RLS policies, indexes
+- `002_business_logic.sql` — removes deprecated lead columns, adds sample tracking, adds `scheduled_visits` and `conversions` tables, migrates `demo_scheduled` → `hot_lead`
 
-### 2026-05-11 — Initial scaffold
-
-**Action:** Ran `npx create-next-app@latest bayars-coffee-crm --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --yes`
-
-**Note:** `create-next-app@latest` installed Next.js 16.2.6 (not 15 as originally planned — 16 is the current stable in May 2026). App Router patterns are identical.
-
-**Files changed:** All files in project root, `src/app/`, `public/`
-
----
-
-### 2026-05-11 — pnpm build script approvals
-
-**Error:** `[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: sharp@0.34.5, unrs-resolver@1.11.1, msw@2.14.5`
-
-**Cause:** pnpm 11 requires explicit approval for packages that run build scripts (native addon compilation). Security feature introduced in pnpm 9.
-
-**Fix:** Added `"pnpm": { "onlyBuiltDependencies": ["msw", "sharp", "unrs-resolver"] }` to `package.json`. Deleted `pnpm-lock.yaml` and re-ran `pnpm install`.
-
-**Files changed:** `package.json`
+**Before running 002:** ensure no application code still references `demo_scheduled`, `scheduled_date`, `scheduled_type`, `bean_price_per_kg`, `menu_image_url`, `demo_date`, `quoted_price`, `quoted_bean_name`, `calibration_visit_date`, `visit_notes`, `cs_handover_date` on leads.
 
 ---
 
-### 2026-05-11 — shadcn toast deprecated
+## Local development
 
-**Error:** `The toast component is deprecated. Use the sonner component instead.`
+```bash
+pnpm install
+pnpm dev          # starts Next.js on http://localhost:3000
+```
 
-**Cause:** shadcn v4 replaced the Radix-based toast with Sonner.
-
-**Fix:** Used `sonner` instead of `toast` in the component add command.
-
-**Files changed:** `src/components/ui/sonner.tsx` added; no `toast.tsx`
-
----
-
-## Database & Auth
-
-### 2026-05-11 — Migration 001_initial_schema.sql created
-
-**Action:** Created `supabase/migrations/001_initial_schema.sql` with:
-- Tables: `profiles`, `leads`, `checkins`
-- Triggers: `handle_updated_at` (profiles + leads), `handle_new_user` (auth.users → profiles)
-- RLS policies on all three tables (rep own-row + manager full-access pattern)
-- Storage bucket `menus` (public, upload restricted to own uid path)
-- Indexes on `leads(created_by, status, created_at)` and `checkins(user_id, lead_id, created_at, type)`
-
-**How to run:** Supabase dashboard → SQL Editor → paste file contents → Run
-
-**Files changed:** `supabase/migrations/001_initial_schema.sql`
+Environment variables required (`.env.local`):
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=      # used by admin client in API routes
+```
 
 ---
 
-### 2026-05-11 — Auth page shadcn components
+## Build & type-check
 
-**Components used in `src/app/(auth)/login/page.tsx`:**
-- `Tabs / TabsList / TabsTrigger / TabsContent` — Sign In / Sign Up switcher, avoids two separate pages
-- `Button` — full-width submit with `disabled` state during loading
-- `Input` — standard email, password, text fields with `autoComplete` set
-- `Label` — accessible labels linked via `htmlFor`
-- `Loader2` from lucide-react with `animate-spin` — spinner during async auth calls
+```bash
+pnpm tsc --noEmit   # type-check only, no output files
+pnpm build          # production build (also type-checks)
+```
 
-**Why Tabs instead of two pages:** Single-route auth keeps the URL as `/login` regardless of mode; no redirect flash when switching between sign-in and sign-up.
+Fix any TypeScript errors before deploying. The build must pass cleanly.
 
 ---
 
-### 2026-05-11 — Email confirmation disabled for development
+## Deployment
 
-**Note:** In Supabase dashboard → Authentication → Settings → "Enable email confirmations" should be toggled OFF during development so sign-ups immediately activate without needing to click an email link. Re-enable before production.
-
-**Files changed:** Supabase dashboard setting only (no code change)
+The app is deployed as a Next.js static/SSR app. Push to the main branch triggers CI/CD (Vercel or equivalent). The service worker (`public/sw.js`) caches static assets; bump the cache version string if you need to force a cache bust.
 
 ---
 
-## Core UI Build
+## Adding a new user
 
-### 2026-05-11 — Components created
-
-**Files created:**
-- `src/lib/supabase/admin.ts` — service role client for checkin insertion
-- `src/app/api/checkins/route.ts` — POST with Haversine distance
-- `src/app/api/leads/route.ts` — GET (role-aware) + POST
-- `src/app/api/leads/[id]/route.ts` — GET + PATCH + DELETE (RLS via server client)
-- `src/app/api/leads/[id]/checkins/route.ts` — GET activity for drawer
-- `src/app/api/geocode/route.ts` — Nominatim reverse geocode proxy
-- `src/components/dashboard/DashboardShell.tsx` — layout shell
-- `src/components/dashboard/LeadListView.tsx` — main lead list
-- `src/components/dashboard/LeadDetailsDrawer.tsx` — edit drawer
-- `src/components/dashboard/CheckInModal.tsx` — GPS check-in
-- `src/components/dashboard/NewLeadModal.tsx` — create lead
+1. Invite the user via Supabase Auth (dashboard → Authentication → Users → Invite).
+2. After sign-up, set their role in the `profiles` table:
+   ```sql
+   UPDATE profiles SET role = 'rep', full_name = 'Name Here' WHERE id = '<user-uuid>';
+   ```
+   Valid roles: `rep`, `manager`.
 
 ---
 
-### 2026-05-11 — GPS + Haversine approach
+## Resetting a user's password
 
-**Approach chosen:** Server-side Haversine formula in the checkins route.
-
-**Why Haversine over PostGIS:** No PostGIS extension needed on the Supabase free tier. Haversine is accurate to ~0.3% for distances under 1000km, which is sufficient for city-level field rep tracking. If precision becomes a concern, a PostGIS `ST_DistanceSphere` call can replace the JS implementation.
-
-**Why server-side:** The distance is a derived value that should be immutable once stored. Computing it server-side (not client-side) prevents a rep from reporting a manipulated distance.
+Use Supabase Auth dashboard → Users → select user → Send password reset email. Do not manually update the `auth.users` table.
 
 ---
 
-### 2026-05-11 — Schedule button placeholder
+## Troubleshooting
 
-**Note:** The "Schedule" button in lead cards shows `toast.info('Schedule feature coming soon')`. A `ScheduleModal` component was deferred — it requires a date picker and lead `scheduled_date`/`scheduled_type` update flow.
+### Check-in fails with "Failed to submit"
+- Confirm the user has GPS enabled in browser permissions.
+- Check `/api/checkins` server logs for Supabase insert errors.
+- Verify the `checkins_type_check` constraint includes all active types (`visit`, `demo`, `workshop`, `start_day`, `end_day`, `new_lead`).
 
----
+### "Day already started" on fresh device
+- A `start_day` checkin exists for today in the database for that user.
+- Either the rep already started day on another device (expected), or the checkin was created erroneously.
+- To clear: `DELETE FROM checkins WHERE user_id = '<uuid>' AND type = 'start_day' AND created_at >= CURRENT_DATE;`
 
-### 2026-05-11 — updated_at used for "Last visit" approximation
+### Geofence flags accumulating
+- Flagged check-ins appear in Reports and the manager notification bell.
+- They are stored with `[FLAGGED: Xm away]` prepended to `remarks`.
+- No automated action; managers review and follow up with reps.
 
-**Note:** The lead card's "Last visit" label derives from `updated_at`, not from checkin timestamps. This is an approximation — `updated_at` changes on any field edit, not just visits. Accurate last-visit display requires a join to the checkins table. Deferred until the dashboard stats row is wired up.
+### Import failing for some rows
+- The import endpoint returns `{ imported, failed, errors }`.
+- Common causes: `status` value not in (`cold_lead`, `hot_lead`, `customer`, `competitor`), duplicate cafe names (not blocked but worth reviewing), malformed numeric fields.
 
----
+### Scheduled visit not appearing for rep
+- Confirm `assigned_to` is set to the rep's user ID (not created_by).
+- RLS on `scheduled_visits` filters SELECT by `assigned_to = auth.uid()` for rep role.
 
----
-
-## Smoke Test & Fixes
-
-### 2026-05-11 — Full smoke test after auth loop resolution
-
-All features tested after confirming login works end-to-end.
-
-**Check In modal** — WORKS. Profile upsert guard + admin client in `/api/checkins` ensures FK constraint is satisfied.
-
-**Lead Details Drawer (all tabs)** — WORKS. PATCH/DELETE use user-scoped client; RLS allows owner operations. Activity tab fetches `/api/leads/[id]/checkins`.
-
-**Start Day / End Day** — WORKS. Uses same checkins route.
-
-**Lead list / search / filters** — WORKS.
-
-**Root page redirect** — FIXED. Was using `getSession()` (reads local cookie only, no server verification). Replaced with `getUser()` which validates the JWT with Supabase servers.
-**Files changed:** `src/app/page.tsx`
-
-**Sign out** — FIXED. Avatar in DashboardShell was a static `div` with no click handler; the `/api/auth/signout` route existed but had no UI trigger. Converted avatar to a `button` that POSTs to signout and hard-navigates to `/login`.
-**Files changed:** `src/components/dashboard/DashboardShell.tsx`
-
-**POST /api/leads 500** — FIXED. `leads.created_by` and `checkins.user_id` both have FK → `profiles(id)`. Users who signed up before the `on_auth_user_created` trigger was installed had no `profiles` row, causing FK violations on every insert. Fixed by upserting the profile row via admin client (bypasses RLS; `ignoreDuplicates: true` preserves existing data) at the start of POST handlers.
-**Files changed:** `src/app/api/leads/route.ts`, `src/app/api/checkins/route.ts`
-
-**Dashboard 307 redirect loop** — FIXED. `(dashboard)/dashboard/page.tsx` had `if (!profile) redirect('/login')` with no fallback. Authenticated users with no profiles row hit an infinite redirect. Replaced with synthetic profile fallback (same pattern as layout.tsx).
-**Files changed:** `src/app/(dashboard)/dashboard/page.tsx`
+### Conversion modal not opening
+- ConversionModal opens only when status is changed to `customer` via the status select in LeadDetailsDrawer.
+- If the lead is already `customer` and you need to log a conversion manually, POST directly to `/api/conversions` with `{ lead_id, bean_type, beans_ordered_kg, notes }`.
 
 ---
 
-### 2026-05-11 — Schedule modal built
+## Key API endpoints
 
-**Action:** Built `ScheduleModal.tsx` — bottom-sheet with visit type selector (Visit/Demo/Workshop), native date+time pickers, notes field. PATCHes `/api/leads/[id]` with `scheduled_date` (ISO) and `scheduled_type`. Wired into `LeadListView` replacing the "coming soon" toast.
-
-**Files changed:** `src/components/dashboard/ScheduleModal.tsx` (new), `src/components/dashboard/LeadListView.tsx`
-
----
-
-### 2026-05-11 — Live stats for Check-ins and KM Today
-
-**Action:** Created `GET /api/checkins/today` route. Queries checkins for `user_id = auth.uid()` since today midnight. Returns `{ checkInCount, totalKm }`. `LeadListView` fetches on mount via `useEffect` and displays live values in the stats row.
-
-**Files changed:** `src/app/api/checkins/today/route.ts` (new), `src/components/dashboard/LeadListView.tsx`
-
----
-
-## Future entries
-
-Use this format:
-
-### [DATE] — [Short description]
-**Error:** ...
-**Cause:** ...
-**Fix:** ...
-**Files changed:** ...
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| GET | `/api/leads` | rep/manager | List all leads |
+| POST | `/api/leads` | rep/manager | Create lead + auto new_lead checkin |
+| PATCH | `/api/leads/:id` | rep/manager | Update lead fields |
+| GET | `/api/checkins/today` | rep/manager | Today's checkin count, km, hasStartDay |
+| POST | `/api/checkins` | rep/manager | Log a check-in |
+| GET | `/api/scheduled-visits` | rep/manager | Rep: own visits. Manager: all |
+| POST | `/api/scheduled-visits` | manager | Create scheduled visit |
+| PATCH | `/api/scheduled-visits/:id` | rep/manager | Mark complete or edit |
+| DELETE | `/api/scheduled-visits/:id` | manager | Remove visit |
+| GET | `/api/conversions` | manager | All conversions |
+| POST | `/api/conversions` | rep/manager | Log conversion |
+| GET | `/api/reports/summary` | manager | Aggregated stats |
+| POST | `/api/import/leads` | manager | Bulk import from CSV |
+| GET | `/api/geocode` | rep/manager | Reverse-geocode lat/lng |
+| GET | `/api/team/members` | manager | List all rep profiles |

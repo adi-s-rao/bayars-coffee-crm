@@ -126,6 +126,19 @@ export default function DashboardShell({ profile, children }: Props) {
 
   async function handleStartDay() {
     setDayLoading(true)
+    try {
+      const todayRes = await fetch('/api/checkins/today')
+      if (todayRes.ok) {
+        const todayData = await todayRes.json() as { hasStartDay?: boolean }
+        if (todayData.hasStartDay) {
+          toast.error('Day already started — check another device or refresh.')
+          setDayLoading(false)
+          return
+        }
+      }
+    } catch {
+      // non-fatal, continue
+    }
     let position: GeolocationPosition
     try {
       position = await getPosition()

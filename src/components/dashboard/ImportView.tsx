@@ -1,22 +1,23 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { CheckCircle, Upload, X } from 'lucide-react'
+import { CheckCircle, Download, Upload, X } from 'lucide-react'
 import Papa from 'papaparse'
 import { useRouter } from 'next/navigation'
 
 const DB_FIELDS: { key: string; label: string; required?: boolean; hint?: string }[] = [
-  { key: 'cafe_name',          label: 'Cafe Name',         required: true },
-  { key: 'status',             label: 'Status',            required: true, hint: 'cold_lead, hot_lead, demo_scheduled, customer, competitor' },
-  { key: 'location_address',   label: 'Address' },
-  { key: 'poc_name',           label: 'Contact Name' },
-  { key: 'poc_contact',        label: 'Contact Phone' },
-  { key: 'coffee_machine',     label: 'Coffee Machine' },
-  { key: 'current_bean_brand', label: 'Bean Brand' },
-  { key: 'bean_usage_kg',      label: 'Bean Usage (kg)' },
-  { key: 'bean_price_per_kg',  label: 'Bean Price/kg' },
-  { key: 'cappuccino_price',   label: 'Cappuccino Price' },
-  { key: 'remarks',            label: 'Remarks' },
+  { key: 'cafe_name',            label: 'Cafe Name',           required: true },
+  { key: 'status',               label: 'Status',              required: true, hint: 'cold_lead, hot_lead, customer, competitor' },
+  { key: 'location_address',     label: 'Address' },
+  { key: 'poc_name',             label: 'Contact Name' },
+  { key: 'poc_contact',          label: 'Contact Phone' },
+  { key: 'coffee_machine',       label: 'Coffee Machine' },
+  { key: 'current_bean_brand',   label: 'Bean Brand' },
+  { key: 'bean_usage_kg',        label: 'Bean Usage (kg)' },
+  { key: 'cappuccino_price',     label: 'Cappuccino Price' },
+  { key: 'sample_name',          label: 'Sample SKU' },
+  { key: 'sample_quantity_grams', label: 'Sample Qty (g)' },
+  { key: 'remarks',              label: 'Remarks' },
 ]
 
 function autoMatch(csvHeader: string): string {
@@ -30,8 +31,9 @@ function autoMatch(csvHeader: string): string {
     ['machine', 'coffee_machine'], ['coffeemachine', 'coffee_machine'],
     ['beanbrand', 'current_bean_brand'], ['brand', 'current_bean_brand'],
     ['beanusage', 'bean_usage_kg'], ['usage', 'bean_usage_kg'],
-    ['beanprice', 'bean_price_per_kg'], ['price', 'bean_price_per_kg'],
     ['cappuccino', 'cappuccino_price'], ['capprice', 'cappuccino_price'],
+    ['samplesku', 'sample_name'], ['samplename', 'sample_name'], ['sku', 'sample_name'],
+    ['sampleqty', 'sample_quantity_grams'], ['samplegrams', 'sample_quantity_grams'],
     ['remarks', 'remarks'], ['notes', 'remarks'],
   ]
   return candidates.find(([k]) => h.includes(k))?.[1] ?? ''
@@ -163,6 +165,28 @@ export default function ImportView() {
             style={{ display: 'none' }}
             onChange={e => handleFile(e.target.files?.[0])}
           />
+          <a
+            href="/import-template.csv"
+            download="bayars-import-template.csv"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              marginTop: '16px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'rgba(118,118,128,0.15)',
+              border: '0.5px solid var(--separator)',
+              fontSize: '15px',
+              fontWeight: 500,
+              color: 'var(--label-secondary)',
+              textDecoration: 'none',
+            }}
+          >
+            <Download size={15} />
+            Download Template
+          </a>
         </div>
       )}
 

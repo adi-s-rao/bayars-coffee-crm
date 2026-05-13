@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, X } from 'lucide-react'
+import { ChevronDown, Loader2, MapPin, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
-import type { CheckIn, CheckInType, Lead, LeadStatus } from '@/types'
+import { COFFEE_SKUS, type CheckIn, type CheckInType, type Lead, type LeadStatus } from '@/types'
+import dynamic from 'next/dynamic'
+
+const ConversionModal = dynamic(() => import('./ConversionModal'), { ssr: false })
 
 interface Props {
   lead: Lead | null
@@ -16,11 +19,10 @@ interface Props {
 }
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string }> = {
-  cold_lead:      { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)' },
-  hot_lead:       { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)' },
-  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.15)'  },
-  customer:       { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)'  },
-  competitor:     { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)'  },
+  cold_lead:  { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)' },
+  hot_lead:   { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)' },
+  customer:   { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)'  },
+  competitor: { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)'  },
 }
 
 const CHECKIN_TYPE_COLOR: Record<CheckInType, string> = {
@@ -29,11 +31,12 @@ const CHECKIN_TYPE_COLOR: Record<CheckInType, string> = {
   workshop:  '#BF5AF2',
   start_day: '#30D158',
   end_day:   '#FF453A',
+  new_lead:  '#D97706',
 }
 
 type DrawerTab = 'overview' | 'coffee' | 'activity'
-type EditableField = 'coffee_machine' | 'current_bean_brand' | 'quoted_bean_name'
-type NumericField = 'bean_usage_kg' | 'bean_price_per_kg' | 'cappuccino_price' | 'quoted_price'
+type EditableField = 'coffee_machine' | 'current_bean_brand'
+type NumericField = 'bean_usage_kg' | 'cappuccino_price'
 
 const fieldRowStyle = (isLast: boolean): React.CSSProperties => ({
   padding: '14px 16px',
@@ -73,11 +76,21 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
   const [editingField, setEditingField] = useState<EditableField | NumericField | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
   const [checkins, setCheckins] = useState<CheckIn[]>([])
   const [checkinsLoading, setCheckinsLoading] = useState(false)
+  const [showConversionModal, setShowConversionModal] = useState(false)
+
+  // SKU dropdown for sample
+  const [skuSearch, setSkuSearch] = useState('')
+  const [skuOpen, setSkuOpen] = useState(false)
+  const skuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (lead) setLocalLead(lead)
+    if (lead) {
+      setLocalLead(lead)
+      setSkuSearch('')
+    }
   }, [lead])
 
   useEffect(() => {
@@ -99,6 +112,16 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
   }, [activeTab])
 
   useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (skuRef.current && !skuRef.current.contains(e.target as Node)) {
+        setSkuOpen(false)
+      }
+    }
+    if (skuOpen) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [skuOpen])
+
+  useEffect(() => {
     if (!lead?.id) return
     setCheckinsLoading(true)
     fetch(`/api/leads/${lead.id}/checkins`)
@@ -107,6 +130,41 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
       .catch(() => setCheckins([]))
       .finally(() => setCheckinsLoading(false))
   }, [lead?.id, refreshTrigger])
+
+  async function handleUpdateLocation() {
+    setLocationLoading(true)
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        })
+      )
+      const lat = pos.coords.latitude
+      const lng = pos.coords.longitude
+      let addr = localLead?.location_address ?? ''
+      try {
+        const res = await fetch(`/api/geocode?lat=${lat}&lon=${lng}`)
+        if (res.ok) {
+          const { address } = await res.json() as { address: string }
+          addr = address
+        }
+      } catch { /* use existing */ }
+      setLocalLead(prev => prev ? { ...prev, latitude: lat, longitude: lng, location_address: addr } : prev)
+      toast.success('Location updated — save to persist')
+    } catch {
+      toast.error('Could not get your location')
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  async function handleStatusChange(newStatus: LeadStatus) {
+    setLocalLead(prev => prev ? { ...prev, status: newStatus } : prev)
+    if (newStatus === 'customer') {
+      setShowConversionModal(true)
+    }
+  }
 
   async function handleSave() {
     if (!localLead) return
@@ -117,6 +175,8 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: localLead.status,
+          latitude: localLead.latitude,
+          longitude: localLead.longitude,
           location_address: localLead.location_address,
           poc_name: localLead.poc_name,
           poc_contact: localLead.poc_contact,
@@ -124,10 +184,9 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
           coffee_machine: localLead.coffee_machine,
           current_bean_brand: localLead.current_bean_brand,
           bean_usage_kg: localLead.bean_usage_kg,
-          bean_price_per_kg: localLead.bean_price_per_kg,
           cappuccino_price: localLead.cappuccino_price,
-          quoted_price: localLead.quoted_price,
-          quoted_bean_name: localLead.quoted_bean_name,
+          sample_name: localLead.sample_name,
+          sample_quantity_grams: localLead.sample_quantity_grams,
         }),
       })
       if (!res.ok) throw new Error('Save failed')
@@ -177,10 +236,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             style={inputStyle}
           />
         ) : (
-          <p
-            onClick={() => setEditingField(field)}
-            style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}
-          >
+          <p onClick={() => setEditingField(field)} style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}>
             {value || '—'}
           </p>
         )}
@@ -205,16 +261,17 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             style={inputStyle}
           />
         ) : (
-          <p
-            onClick={() => setEditingField(field)}
-            style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}
-          >
+          <p onClick={() => setEditingField(field)} style={{ fontSize: '17px', color: 'var(--label-primary)', cursor: 'pointer' }}>
             {value !== undefined ? value : '—'}
           </p>
         )}
       </div>
     )
   }
+
+  const filteredSkus = COFFEE_SKUS.filter(s =>
+    s.toLowerCase().includes(skuSearch.toLowerCase())
+  )
 
   return (
     <>
@@ -236,42 +293,18 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         <div style={{ borderBottom: '0.5px solid var(--separator)', padding: '20px 20px 0' }}>
           <div className="flex items-start justify-between gap-2">
             <p style={{ fontSize: '22px', fontWeight: 700, color: 'var(--label-primary)', lineHeight: 1.2 }}>{localLead.cafe_name}</p>
-            <span
-              style={{
-                flexShrink: 0,
-                borderRadius: '8px',
-                padding: '3px 8px',
-                fontSize: '11px',
-                fontWeight: 600,
-                background: statusMeta.bg,
-                color: statusMeta.color,
-              }}
-            >
+            <span style={{ flexShrink: 0, borderRadius: '8px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, background: statusMeta.bg, color: statusMeta.color }}>
               {statusMeta.label}
             </span>
           </div>
 
-          <div style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {localLead.latitude && localLead.longitude && (
               <button
                 type="button"
-                onClick={() =>
-                  window.open(
-                    `https://www.google.com/maps/dir/?api=1&destination=${localLead.latitude},${localLead.longitude}`,
-                    '_blank'
-                  )
-                }
+                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${localLead.latitude},${localLead.longitude}`, '_blank')}
                 className="flex items-center gap-1.5 transition-all active:scale-[0.96]"
-                style={{
-                  background: 'rgba(217,119,6,0.12)',
-                  border: '0.5px solid rgba(217,119,6,0.3)',
-                  borderRadius: '10px',
-                  padding: '8px 14px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#D97706',
-                  cursor: 'pointer',
-                }}
+                style={{ background: 'rgba(217,119,6,0.12)', border: '0.5px solid rgba(217,119,6,0.3)', borderRadius: '10px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, color: '#D97706', cursor: 'pointer' }}
               >
                 <MapPin size={13} />
                 Navigate
@@ -279,16 +312,19 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             )}
             <button
               type="button"
+              onClick={handleUpdateLocation}
+              disabled={locationLoading}
+              className="flex items-center gap-1.5 transition-all active:scale-[0.96]"
+              style={{ background: 'rgba(118,118,128,0.1)', border: '0.5px solid var(--separator)', borderRadius: '10px', padding: '8px 14px', fontSize: '13px', fontWeight: 500, color: 'var(--label-secondary)', cursor: 'pointer', opacity: locationLoading ? 0.5 : 1 }}
+            >
+              {locationLoading ? <Loader2 size={12} className="animate-spin" /> : <MapPin size={12} />}
+              Update Location
+            </button>
+            <button
+              type="button"
               onClick={onClose}
               className="ml-auto transition-colors hover:text-white active:scale-[0.92]"
-              style={{
-                background: 'rgba(118,118,128,0.15)',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '8px',
-                color: 'var(--label-secondary)',
-                cursor: 'pointer',
-              }}
+              style={{ background: 'rgba(118,118,128,0.15)', border: 'none', borderRadius: '10px', padding: '8px', color: 'var(--label-secondary)', cursor: 'pointer' }}
             >
               <X size={15} />
             </button>
@@ -297,7 +333,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
           {/* Tab bar */}
           <div style={{ position: 'relative', display: 'flex', gap: '20px', borderBottom: '0.5px solid var(--separator)' }}>
             {([
-              { key: 'overview' as DrawerTab, label: 'Overview',      ref: overviewRef  },
+              { key: 'overview' as DrawerTab, label: 'Overview',       ref: overviewRef  },
               { key: 'coffee'   as DrawerTab, label: 'Coffee Details', ref: coffeeRef    },
               { key: 'activity' as DrawerTab, label: 'Activity',       ref: activityRef  },
             ] as const).map(({ key, label, ref }) => (
@@ -306,32 +342,12 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                 ref={ref}
                 type="button"
                 onClick={() => setActiveTab(key)}
-                style={{
-                  paddingBottom: '12px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  color: activeTab === key ? 'var(--label-primary)' : 'var(--label-tertiary)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'color 0.15s ease',
-                }}
+                style={{ paddingBottom: '12px', fontSize: '15px', fontWeight: 500, color: activeTab === key ? 'var(--label-primary)' : 'var(--label-tertiary)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s ease' }}
               >
                 {label}
               </button>
             ))}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '-0.5px',
-                height: '2px',
-                borderRadius: '1px',
-                background: '#D97706',
-                transition: 'all 200ms ease',
-                left: underline.left,
-                width: underline.width,
-              }}
-            />
+            <div style={{ position: 'absolute', bottom: '-0.5px', height: '2px', borderRadius: '1px', background: '#D97706', transition: 'all 200ms ease', left: underline.left, width: underline.width }} />
           </div>
         </div>
 
@@ -344,18 +360,17 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                 {/* Address */}
                 <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <MapPin size={15} style={{ marginTop: '2px', flexShrink: 0, color: 'var(--label-tertiary)' }} />
-                  <p style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>
-                    {localLead.location_address || 'No address'}
-                  </p>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>
+                      {localLead.location_address || 'No address'}
+                    </p>
+                  </div>
                 </div>
                 {/* POC */}
                 <div style={{ ...fieldRowStyle(false), display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>{localLead.poc_name || '—'}</span>
                   {localLead.poc_contact && (
-                    <a
-                      href={`tel:${localLead.poc_contact}`}
-                      style={{ fontSize: '15px', color: '#D97706', textDecoration: 'none' }}
-                    >
+                    <a href={`tel:${localLead.poc_contact}`} style={{ fontSize: '15px', color: '#D97706', textDecoration: 'none' }}>
                       {localLead.poc_contact}
                     </a>
                   )}
@@ -365,14 +380,11 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                   <p style={labelStyle}>Status</p>
                   <select
                     value={localLead.status}
-                    onChange={e =>
-                      setLocalLead(prev => prev ? { ...prev, status: e.target.value as LeadStatus } : prev)
-                    }
+                    onChange={e => void handleStatusChange(e.target.value as LeadStatus)}
                     style={{ ...inputStyle, cursor: 'pointer' }}
                   >
                     <option value="cold_lead">Cold Lead</option>
                     <option value="hot_lead">Hot Lead</option>
-                    <option value="demo_scheduled">Demo Scheduled</option>
                     <option value="customer">Customer</option>
                     <option value="competitor">Competitor</option>
                   </select>
@@ -383,9 +395,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
                   <textarea
                     rows={3}
                     value={localLead.remarks ?? ''}
-                    onChange={e =>
-                      setLocalLead(prev => prev ? { ...prev, remarks: e.target.value || undefined } : prev)
-                    }
+                    onChange={e => setLocalLead(prev => prev ? { ...prev, remarks: e.target.value || undefined } : prev)}
                     placeholder="Add notes…"
                     style={{ ...inputStyle, resize: 'none' }}
                     className="placeholder:text-[rgba(235,235,245,0.3)]"
@@ -401,14 +411,68 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
           {/* Coffee Details */}
           {activeTab === 'coffee' && (
             <div style={{ padding: '16px' }}>
-              <div style={{ background: 'rgba(118,118,128,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ background: 'rgba(118,118,128,0.08)', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
                 <EditableRow    field="coffee_machine"     label="Coffee Machine"     value={localLead.coffee_machine} />
                 <EditableRow    field="current_bean_brand" label="Current Bean Brand" value={localLead.current_bean_brand} />
-                <EditableNumericRow field="bean_usage_kg"     label="Bean Usage (kg)"  value={localLead.bean_usage_kg} />
-                <EditableNumericRow field="bean_price_per_kg" label="Bean Price / kg"  value={localLead.bean_price_per_kg} />
-                <EditableNumericRow field="cappuccino_price"  label="Cappuccino Price" value={localLead.cappuccino_price} />
-                <EditableNumericRow field="quoted_price"      label="Quoted Price"     value={localLead.quoted_price} />
-                <EditableRow    field="quoted_bean_name" label="Quoted Bean" value={localLead.quoted_bean_name} isLast />
+                <EditableNumericRow field="bean_usage_kg"  label="Bean Usage (kg/mo)" value={localLead.bean_usage_kg} />
+                <EditableNumericRow field="cappuccino_price" label="Cappuccino Price" value={localLead.cappuccino_price} isLast />
+              </div>
+
+              {/* Sample section */}
+              <div style={{ background: 'rgba(217,119,6,0.08)', borderRadius: '12px', padding: '16px', border: '0.5px solid rgba(217,119,6,0.2)' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#D97706', marginBottom: '14px' }}>Sample Given</p>
+
+                {/* SKU dropdown */}
+                <div ref={skuRef} style={{ position: 'relative', marginBottom: '12px' }}>
+                  <p style={labelStyle}>Product SKU</p>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="Search SKU…"
+                      value={skuSearch || localLead.sample_name || ''}
+                      onChange={e => { setSkuSearch(e.target.value); setLocalLead(prev => prev ? { ...prev, sample_name: undefined } : prev); setSkuOpen(true) }}
+                      onFocus={() => setSkuOpen(true)}
+                      style={inputStyle}
+                      className="placeholder:text-[rgba(235,235,245,0.3)]"
+                    />
+                    <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(235,235,245,0.4)', pointerEvents: 'none' }} />
+                  </div>
+                  {skuOpen && filteredSkus.length > 0 && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-card)', borderRadius: '10px', border: '0.5px solid var(--separator)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 100, maxHeight: '180px', overflowY: 'auto' }}>
+                      {filteredSkus.map(sku => (
+                        <button
+                          key={sku}
+                          type="button"
+                          onMouseDown={() => { setLocalLead(prev => prev ? { ...prev, sample_name: sku } : prev); setSkuSearch(''); setSkuOpen(false) }}
+                          style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', fontSize: '14px', color: 'var(--label-primary)', cursor: 'pointer', borderBottom: '0.5px solid var(--separator)' }}
+                        >
+                          {sku}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {localLead.sample_name && (
+                    <p style={{ marginTop: '4px', fontSize: '12px', color: '#D97706' }}>✓ {localLead.sample_name}</p>
+                  )}
+                </div>
+
+                {/* Sample qty */}
+                <div>
+                  <p style={labelStyle}>Quantity (grams)</p>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    placeholder="250"
+                    value={localLead.sample_quantity_grams ?? ''}
+                    onChange={e => {
+                      const n = parseInt(e.target.value, 10)
+                      setLocalLead(prev => prev ? { ...prev, sample_quantity_grams: isNaN(n) ? undefined : n } : prev)
+                    }}
+                    style={inputStyle}
+                    className="placeholder:text-[rgba(235,235,245,0.3)]"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -465,19 +529,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             onClick={handleSave}
             disabled={saving}
             className="flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-            style={{
-              height: '50px',
-              borderRadius: '14px',
-              width: 'calc(100% - 40px)',
-              margin: '16px 20px 0',
-              background: '#D97706',
-              color: '#FFF',
-              fontSize: '17px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              opacity: saving ? 0.5 : 1,
-            }}
+            style={{ height: '50px', borderRadius: '14px', width: 'calc(100% - 40px)', margin: '16px 20px 0', background: '#D97706', color: '#FFF', fontSize: '17px', fontWeight: 600, border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
@@ -485,23 +537,25 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            style={{
-              width: '100%',
-              textAlign: 'center',
-              fontSize: '17px',
-              color: '#FF453A',
-              background: 'transparent',
-              border: 'none',
-              padding: '12px 20px 20px',
-              cursor: 'pointer',
-              opacity: deleting ? 0.5 : 1,
-            }}
+            style={{ width: '100%', textAlign: 'center', fontSize: '17px', color: '#FF453A', background: 'transparent', border: 'none', padding: '12px 20px 20px', cursor: 'pointer', opacity: deleting ? 0.5 : 1 }}
           >
             {deleting ? 'Deleting…' : 'Delete Lead'}
           </button>
         </div>
       </div>
+
+      {/* Conversion modal — triggered when status changes to customer */}
+      {localLead && (
+        <ConversionModal
+          lead={localLead}
+          isOpen={showConversionModal}
+          onClose={() => setShowConversionModal(false)}
+          onConverted={(updatedLead: Lead) => {
+            setShowConversionModal(false)
+            onUpdate(updatedLead)
+          }}
+        />
+      )}
     </>
   )
 }
-

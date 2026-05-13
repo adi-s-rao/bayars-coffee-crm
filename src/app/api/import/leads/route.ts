@@ -6,15 +6,12 @@ import type { LeadStatus } from '@/types'
 const STATUS_MAP: Record<string, LeadStatus> = {
   hot: 'hot_lead',
   'hot lead': 'hot_lead',
+  hot_lead: 'hot_lead',
   cold: 'cold_lead',
   'cold lead': 'cold_lead',
-  demo: 'demo_scheduled',
-  'demo scheduled': 'demo_scheduled',
+  cold_lead: 'cold_lead',
   customer: 'customer',
   competitor: 'competitor',
-  hot_lead: 'hot_lead',
-  cold_lead: 'cold_lead',
-  demo_scheduled: 'demo_scheduled',
 }
 
 function normaliseStatus(raw: string): LeadStatus {
@@ -31,9 +28,10 @@ interface MappedRow {
   coffee_machine?: string
   current_bean_brand?: string
   bean_usage_kg?: string
-  bean_price_per_kg?: string
   cappuccino_price?: string
   remarks?: string
+  sample_name?: string
+  sample_quantity_grams?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -72,9 +70,10 @@ export async function POST(request: NextRequest) {
         coffee_machine: r.coffee_machine?.trim() || null,
         current_bean_brand: r.current_bean_brand?.trim() || null,
         bean_usage_kg: r.bean_usage_kg ? parseFloat(r.bean_usage_kg) || null : null,
-        bean_price_per_kg: r.bean_price_per_kg ? parseFloat(r.bean_price_per_kg) || null : null,
         cappuccino_price: r.cappuccino_price ? parseFloat(r.cappuccino_price) || null : null,
         remarks: r.remarks?.trim() || null,
+        sample_name: r.sample_name?.trim() || null,
+        sample_quantity_grams: r.sample_quantity_grams ? parseInt(r.sample_quantity_grams, 10) || null : null,
       }))
 
     const BATCH = 50

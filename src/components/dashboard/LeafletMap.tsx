@@ -7,11 +7,10 @@ import 'leaflet/dist/leaflet.css'
 import type { Lead, LeadStatus } from '@/types'
 
 const STATUS_COLOR: Record<LeadStatus, string> = {
-  cold_lead:      '#3B82F6',
-  hot_lead:       '#F97316',
-  demo_scheduled: '#D97706',
-  customer:       '#22C55E',
-  competitor:     '#EF4444',
+  cold_lead:  '#3B82F6',
+  hot_lead:   '#F97316',
+  customer:   '#22C55E',
+  competitor: '#EF4444',
 }
 
 function makeIcon(color: string): L.DivIcon {

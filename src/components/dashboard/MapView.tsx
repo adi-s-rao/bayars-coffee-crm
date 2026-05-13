@@ -11,22 +11,20 @@ import CheckInModal from './CheckInModal'
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false })
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string; dot: string }> = {
-  cold_lead:      { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)',  dot: '#0A84FF' },
-  hot_lead:       { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)',  dot: '#FF9F0A' },
-  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.15)',   dot: '#D97706' },
-  customer:       { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)',   dot: '#30D158' },
-  competitor:     { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)',   dot: '#FF453A' },
+  cold_lead:  { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)',  dot: '#0A84FF' },
+  hot_lead:   { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)',  dot: '#FF9F0A' },
+  customer:   { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)',   dot: '#30D158' },
+  competitor: { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)',   dot: '#FF453A' },
 }
 
 const STATUS_KEY: Record<string, LeadStatus> = {
   'Cold Lead':  'cold_lead',
   'Hot Lead':   'hot_lead',
-  'Demo':       'demo_scheduled',
   'Customer':   'customer',
   'Competitor': 'competitor',
 }
 
-const FILTER_LABELS = ['All', 'Cold Lead', 'Hot Lead', 'Demo', 'Customer', 'Competitor']
+const FILTER_LABELS = ['All', 'Cold Lead', 'Hot Lead', 'Customer', 'Competitor']
 
 interface Props {
   leads: Lead[]

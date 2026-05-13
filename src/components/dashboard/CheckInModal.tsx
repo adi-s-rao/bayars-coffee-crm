@@ -14,26 +14,21 @@ interface Props {
 }
 
 const STATUS_META: Record<LeadStatus, { label: string; color: string; bg: string }> = {
-  cold_lead:      { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)' },
-  hot_lead:       { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)' },
-  demo_scheduled: { label: 'Demo',       color: '#D97706', bg: 'rgba(217,119,6,0.15)'  },
-  customer:       { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)'  },
-  competitor:     { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)'  },
+  cold_lead:  { label: 'Cold Lead',  color: '#0A84FF', bg: 'rgba(10,132,255,0.15)' },
+  hot_lead:   { label: 'Hot Lead',   color: '#FF9F0A', bg: 'rgba(255,159,10,0.15)' },
+  customer:   { label: 'Customer',   color: '#30D158', bg: 'rgba(48,209,88,0.15)'  },
+  competitor: { label: 'Competitor', color: '#FF453A', bg: 'rgba(255,69,58,0.15)'  },
 }
 
 const CHECKIN_TYPES: CheckInType[] = ['visit', 'demo', 'workshop']
 
-function haversineMetres(
-  lat1: number, lon1: number,
-  lat2: number, lon2: number
-): number {
+function haversineMetres(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLon = (lon2 - lon1) * Math.PI / 180
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) ** 2
   return R * 2 * Math.asin(Math.sqrt(a))
 }
@@ -58,10 +53,6 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
   const [gpsNote, setGpsNote] = useState<string | null>(null)
   const [geofenceWarning, setGeofenceWarning] = useState<{ distance: number } | null>(null)
   const [remarks, setRemarks] = useState('')
-  const [gatePass, setGatePass] = useState('')
-  const [beansUsed, setBeansUsed] = useState(false)
-  const [beanBrand, setBeanBrand] = useState('')
-  const [beanAmount, setBeanAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -126,10 +117,6 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           user_id: profile.id,
           user_name: profile.full_name,
           remarks: remarks || undefined,
-          gate_pass_number: gatePass || undefined,
-          beans_used: beansUsed,
-          bean_brand: beansUsed ? beanBrand || undefined : undefined,
-          bean_amount_kg: beansUsed && beanAmount ? parseFloat(beanAmount) : undefined,
           geofence_flagged: flagged,
           geofence_distance_m: flagged && geofenceWarning ? geofenceWarning.distance : undefined,
         }),
@@ -155,7 +142,6 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         className="relative z-10 w-full md:mx-4 md:max-w-md md:rounded-3xl"
         style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px', paddingBottom: 90 }}
       >
-        {/* Drag handle */}
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />
 
         {/* Header */}
@@ -164,16 +150,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
             <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--label-primary)' }}>Check In</h2>
             <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <p style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>{lead.cafe_name}</p>
-              <span
-                style={{
-                  borderRadius: '6px',
-                  padding: '2px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  background: statusMeta.bg,
-                  color: statusMeta.color,
-                }}
-              >
+              <span style={{ borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, background: statusMeta.bg, color: statusMeta.color }}>
                 {statusMeta.label}
               </span>
             </div>
@@ -182,14 +159,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
             type="button"
             onClick={onClose}
             className="transition-colors active:scale-[0.92]"
-            style={{
-              background: 'rgba(118,118,128,0.15)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '8px',
-              color: 'rgba(235,235,245,0.6)',
-              cursor: 'pointer',
-            }}
+            style={{ background: 'rgba(118,118,128,0.15)', border: 'none', borderRadius: '10px', padding: '8px', color: 'rgba(235,235,245,0.6)', cursor: 'pointer' }}
           >
             <X size={16} />
           </button>
@@ -203,17 +173,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
               type="button"
               onClick={() => setCheckinType(t)}
               className="flex-1 transition-all active:scale-[0.95]"
-              style={{
-                height: '44px',
-                borderRadius: '10px',
-                fontSize: '15px',
-                fontWeight: 500,
-                textTransform: 'capitalize',
-                border: 'none',
-                cursor: 'pointer',
-                background: checkinType === t ? '#D97706' : 'rgba(118,118,128,0.2)',
-                color: checkinType === t ? '#FFF' : 'var(--label-secondary)',
-              }}
+              style={{ height: '44px', borderRadius: '10px', fontSize: '15px', fontWeight: 500, textTransform: 'capitalize', border: 'none', cursor: 'pointer', background: checkinType === t ? '#D97706' : 'rgba(118,118,128,0.2)', color: checkinType === t ? '#FFF' : 'var(--label-secondary)' }}
             >
               {t}
             </button>
@@ -223,16 +183,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         {/* GPS */}
         <div style={{ marginBottom: '16px' }}>
           {location ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'rgba(48,209,88,0.1)',
-                borderRadius: '10px',
-                padding: '14px',
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(48,209,88,0.1)', borderRadius: '10px', padding: '14px' }}>
               <MapPin size={14} style={{ color: '#30D158' }} />
               <span style={{ flex: 1, fontSize: '13px', color: '#30D158' }}>Location captured</span>
             </div>
@@ -242,17 +193,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
               onClick={captureLocation}
               disabled={gpsLoading}
               className="flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{
-                width: '100%',
-                height: '50px',
-                background: 'rgba(118,118,128,0.15)',
-                border: '0.5px solid rgba(255,255,255,0.1)',
-                borderRadius: '10px',
-                fontSize: '15px',
-                color: 'var(--label-secondary)',
-                cursor: 'pointer',
-                opacity: gpsLoading ? 0.5 : 1,
-              }}
+              style={{ width: '100%', height: '50px', background: 'rgba(118,118,128,0.15)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '15px', color: 'var(--label-secondary)', cursor: 'pointer', opacity: gpsLoading ? 0.5 : 1 }}
             >
               {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
               {gpsLoading ? 'Getting location…' : 'Capture Location'}
@@ -272,22 +213,13 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
                 </span>
               </div>
               <p style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(235,235,245,0.4)' }}>
-                Check-in recorded but flagged for review
+                Check-in will be flagged for review
               </p>
               <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={cancelGps}
-                  style={{
-                    flex: 1,
-                    height: '40px',
-                    background: 'rgba(118,118,128,0.2)',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '13px',
-                    color: 'rgba(235,235,245,0.6)',
-                    cursor: 'pointer',
-                  }}
+                  style={{ flex: 1, height: '40px', background: 'rgba(118,118,128,0.2)', borderRadius: '8px', border: 'none', fontSize: '13px', color: 'rgba(235,235,245,0.6)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -295,17 +227,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
                   type="button"
                   onClick={() => void handleSubmit(true)}
                   disabled={submitting}
-                  style={{
-                    flex: 1,
-                    height: '40px',
-                    background: 'rgba(255,69,58,0.2)',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '13px',
-                    color: '#FF453A',
-                    cursor: 'pointer',
-                    opacity: submitting ? 0.5 : 1,
-                  }}
+                  style={{ flex: 1, height: '40px', background: 'rgba(255,69,58,0.2)', borderRadius: '8px', border: 'none', fontSize: '13px', color: '#FF453A', cursor: 'pointer', opacity: submitting ? 0.5 : 1 }}
                 >
                   {submitting ? 'Submitting…' : 'Check In Anyway'}
                 </button>
@@ -315,7 +237,7 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
         </div>
 
         {/* Remarks */}
-        <div style={{ marginBottom: '12px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <textarea
             rows={2}
             placeholder="Add notes…"
@@ -326,91 +248,13 @@ export default function CheckInModal({ lead, isOpen, onClose, onCheckedIn, profi
           />
         </div>
 
-        {/* Gate pass */}
-        <div style={{ marginBottom: '16px' }}>
-          <input
-            type="text"
-            placeholder="Gate pass number (optional)"
-            value={gatePass}
-            onChange={e => setGatePass(e.target.value)}
-            style={inputStyle}
-            className="placeholder:text-[rgba(235,235,245,0.3)]"
-          />
-        </div>
-
-        {/* Beans toggle */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '15px', color: 'var(--label-secondary)' }}>Beans used?</span>
-            <button
-              type="button"
-              onClick={() => setBeansUsed(v => !v)}
-              style={{
-                position: 'relative',
-                width: '50px',
-                height: '28px',
-                borderRadius: '14px',
-                border: 'none',
-                cursor: 'pointer',
-                background: beansUsed ? '#D97706' : 'rgba(118,118,128,0.4)',
-                transition: 'background 0.2s ease',
-              }}
-            >
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '3px',
-                  left: beansUsed ? '25px' : '3px',
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  background: '#FFF',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                  transition: 'left 0.2s ease',
-                }}
-              />
-            </button>
-          </div>
-          {beansUsed && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                type="text"
-                placeholder="Bean brand"
-                value={beanBrand}
-                onChange={e => setBeanBrand(e.target.value)}
-                style={{ ...inputStyle, flex: 1 }}
-                className="placeholder:text-[rgba(235,235,245,0.3)]"
-              />
-              <input
-                type="number"
-                placeholder="kg"
-                value={beanAmount}
-                onChange={e => setBeanAmount(e.target.value)}
-                style={{ ...inputStyle, width: '80px', flex: 'none' }}
-                className="placeholder:text-[rgba(235,235,245,0.3)]"
-              />
-            </div>
-          )}
-        </div>
-
         {/* Submit */}
         <button
           type="button"
           onClick={() => void handleSubmit(false)}
           disabled={!location || submitting || geofenceWarning != null}
           className="flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
-          style={{
-            width: '100%',
-            height: '50px',
-            borderRadius: '14px',
-            background: '#D97706',
-            color: '#FFF',
-            fontSize: '17px',
-            fontWeight: 600,
-            border: 'none',
-            cursor: !location || submitting || geofenceWarning != null ? 'not-allowed' : 'pointer',
-            opacity: !location || submitting || geofenceWarning != null ? 0.5 : 1,
-          }}
+          style={{ width: '100%', height: '50px', borderRadius: '14px', background: '#D97706', color: '#FFF', fontSize: '17px', fontWeight: 600, border: 'none', cursor: !location || submitting || geofenceWarning != null ? 'not-allowed' : 'pointer', opacity: !location || submitting || geofenceWarning != null ? 0.5 : 1 }}
         >
           {submitting && <Loader2 size={18} className="animate-spin" />}
           {submitting ? 'Submitting…' : 'Submit Check-in'}
