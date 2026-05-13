@@ -144,12 +144,12 @@ export default function NewLeadModal({ isOpen, onClose, onCreated }: Props) {
   const canSubmit = cafeName.trim().length > 0 && location !== null && !pocError
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
+    <div className="fixed inset-0 flex items-end justify-center md:items-center" style={{ zIndex: 1100 }}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       <div
         className="relative z-10 w-full overflow-y-auto md:mx-4 md:max-w-md md:rounded-3xl"
-        style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '92vh' }}
+        style={{ background: 'var(--bg-card)', borderRadius: '24px 24px 0 0', padding: '24px', paddingBottom: 90, maxHeight: '92vh' }}
       >
         {/* Drag handle */}
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} className="md:hidden" />

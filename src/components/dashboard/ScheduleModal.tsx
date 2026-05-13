@@ -83,7 +83,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
 
       <div
@@ -95,6 +95,7 @@ export default function ScheduleModal({ lead, isOpen, onClose, onScheduled }: Pr
           background: 'var(--bg-card)',
           borderRadius: '24px 24px 0 0',
           padding: '24px',
+          paddingBottom: 90,
         }}
       >
         <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(235,235,245,0.2)', margin: '0 auto 20px' }} />

@@ -220,16 +220,17 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          style={{ zIndex: 1100 }}
           onClick={onClose}
         />
       )}
 
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:w-[420px] ${
+        className={`fixed right-0 top-0 flex h-full w-full flex-col transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:w-[420px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ background: 'var(--bg-card)', borderLeft: '0.5px solid var(--separator)' }}
+        style={{ background: 'var(--bg-card)', borderLeft: '0.5px solid var(--separator)', zIndex: 1110 }}
       >
         {/* Header */}
         <div style={{ borderBottom: '0.5px solid var(--separator)', padding: '20px 20px 0' }}>
@@ -458,7 +459,7 @@ export default function LeadDetailsDrawer({ lead, isOpen, onClose, onUpdate, onD
         </div>
 
         {/* Footer */}
-        <div>
+        <div style={{ paddingBottom: 'calc(16px + 80px)' }}>
           <button
             type="button"
             onClick={handleSave}

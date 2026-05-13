@@ -50,6 +50,11 @@ export default function LeafletMap({ leads, onMarkerClick, flyTo }: Props) {
       : [25.2048, 55.2708]
 
   return (
+    <>
+      <style>{`
+        .leaflet-popup { z-index: 999 !important; }
+        .leaflet-control { z-index: 999 !important; }
+      `}</style>
     <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', background: '#e8e8e8' }} zoomControl>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -66,5 +71,6 @@ export default function LeafletMap({ leads, onMarkerClick, flyTo }: Props) {
         />
       ))}
     </MapContainer>
+    </>
   )
 }

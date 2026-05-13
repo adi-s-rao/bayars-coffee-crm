@@ -222,7 +222,7 @@ export default function NotificationPanel({ payload, profile: _profile, onClose 
   return (
     <>
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 55 }}
+        style={{ position: 'fixed', inset: 0, zIndex: 1001 }}
         onClick={onClose}
       />
       <div
@@ -241,7 +241,7 @@ export default function NotificationPanel({ payload, profile: _profile, onClose 
           boxShadow: isDark
             ? '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset'
             : '0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)',
-          zIndex: 60,
+          zIndex: 1002,
           animation: 'slideDown 0.2s ease',
           paddingBottom: '12px',
         }}

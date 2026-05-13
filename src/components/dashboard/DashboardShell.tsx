@@ -14,7 +14,6 @@ import {
   MapPin,
   RefreshCw,
   Settings,
-  Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
@@ -200,12 +199,13 @@ export default function DashboardShell({ profile, children }: Props) {
   const isManager = profile.role === 'manager'
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  console.log('profile role:', profile.role)
 
   return (
     <div className="flex min-h-screen flex-col" style={{ background: 'var(--bg-page)' }}>
       {/* Top Navbar */}
       <header
-        className="relative sticky top-0 z-30 px-4 py-3.5"
+        className="relative sticky top-0 z-[1001] px-4 py-3.5"
         style={{
           background: isDark ? 'rgba(28,28,30,0.72)' : 'rgba(255,255,255,0.72)',
           backdropFilter: 'blur(40px) saturate(180%)',
@@ -270,7 +270,7 @@ export default function DashboardShell({ profile, children }: Props) {
 
               {isProfileDropdownOpen && (
                 <div
-                  className="absolute right-0 top-10 z-[100] w-[220px] rounded-2xl py-1 shadow-2xl"
+                  className="absolute right-0 top-10 z-[1002] w-[220px] rounded-2xl py-1 shadow-2xl"
                   style={{
                     background: isDark ? 'rgba(28,28,30,0.95)' : 'rgba(255,255,255,0.97)',
                     backdropFilter: 'blur(40px) saturate(180%)',
@@ -286,6 +286,35 @@ export default function DashboardShell({ profile, children }: Props) {
                     <p style={{ fontSize: '11px', color: 'var(--label-tertiary)' }}>{profile.email}</p>
                   </div>
                   <div className="px-2 py-1">
+                    {profile.role === 'manager' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false)
+                          startTransition(() => router.push('/dashboard/import'))
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: 15,
+                          color: 'var(--label-primary)',
+                          fontFamily: 'inherit',
+                          textAlign: 'left' as const,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <span style={{ fontSize: 16 }}>📥</span>
+                        Import Data
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => { setIsSettingsOpen(true); setIsProfileDropdownOpen(false) }}
@@ -295,20 +324,6 @@ export default function DashboardShell({ profile, children }: Props) {
                       <Settings size={14} />
                       Settings
                     </button>
-                    {isManager && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileDropdownOpen(false)
-                          startTransition(() => router.push('/dashboard/import'))
-                        }}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
-                        style={{ fontSize: '13px', color: 'var(--label-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Upload size={14} />
-                        Import Data
-                      </button>
-                    )}
                     <button
                       type="button"
                       onClick={() => { void signOut(); setIsProfileDropdownOpen(false) }}
@@ -344,6 +359,8 @@ export default function DashboardShell({ profile, children }: Props) {
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderBottom: '0.5px solid var(--separator)',
           height: '44px',
+          position: 'relative',
+          zIndex: 1001,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -433,7 +450,7 @@ export default function DashboardShell({ profile, children }: Props) {
 
       {/* Floating Pill Tab Bar */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[1000]"
+        className="fixed bottom-0 left-0 right-0 z-[1001]"
         style={{ padding: '0 20px 16px', pointerEvents: 'none' }}
       >
         <div

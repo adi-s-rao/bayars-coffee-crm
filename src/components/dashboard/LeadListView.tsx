@@ -425,8 +425,8 @@ export default function LeadListView({ profile }: Props) {
       <button
         type="button"
         onClick={() => setIsNewLeadOpen(true)}
-        className="fixed right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
-        style={{ bottom: '106px' }}
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D97706] shadow-lg transition-all active:scale-[0.92] hover:bg-[#B45309]"
+        style={{ position: 'fixed', bottom: 96, right: 20, zIndex: 35 }}
         aria-label="New lead"
       >
         <Plus size={22} className="text-white" />

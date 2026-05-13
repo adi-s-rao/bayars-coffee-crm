@@ -81,6 +81,8 @@ export default function MapView({ leads, profile }: Props) {
           gap: '8px',
           overflowX: 'auto',
           flexShrink: 0,
+          position: 'relative',
+          zIndex: 1001,
         }}
         className="[&::-webkit-scrollbar]:hidden"
       >
@@ -158,7 +160,7 @@ export default function MapView({ leads, profile }: Props) {
 
         {/* Bottom popup for selected lead */}
         {selectedLead && !isDrawerOpen && !isCheckInOpen && (
-          <div className="absolute bottom-4 left-0 right-0 z-[400] px-3">
+          <div className="absolute bottom-4 left-0 right-0 px-3" style={{ zIndex: 1002 }}>
             <div
               style={{
                 borderRadius: '16px',
