@@ -3,6 +3,7 @@
 import { AlertCircle, AlertTriangle, Calendar, CheckCircle } from 'lucide-react'
 import type { Profile } from '@/types'
 import { format } from 'date-fns'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const TYPE_COLOR: Record<string, string> = {
   visit:    '#0A84FF',
@@ -65,6 +66,9 @@ interface Props {
 }
 
 export default function NotificationPanel({ payload, profile: _profile, onClose }: Props) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   const sectionLabel: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -229,10 +233,14 @@ export default function NotificationPanel({ payload, profile: _profile, onClose 
           width: '320px',
           maxHeight: 'calc(100vh - 80px)',
           overflowY: 'auto',
-          background: 'var(--bg-elevated)',
+          background: isDark ? 'rgba(28,28,30,0.95)' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
           borderRadius: '16px',
-          border: '0.5px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.08)',
+          boxShadow: isDark
+            ? '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset'
+            : '0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)',
           zIndex: 60,
           animation: 'slideDown 0.2s ease',
           paddingBottom: '12px',

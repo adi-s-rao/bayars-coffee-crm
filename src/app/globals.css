@@ -1,33 +1,55 @@
 @import "tailwindcss";
 
+/* ─── Dark theme (default) ──────────────────────────────────────────────── */
 :root[data-theme='dark'], :root:not([data-theme]) {
-  --bg-page: #000000;
-  --bg-card: #1C1C1E;
+  --bg-page:     #000000;
+  --bg-card:     #1C1C1E;
   --bg-elevated: #2C2C2E;
-  --bg-input: rgba(118,118,128,0.12);
-  --bg-navbar: rgba(28,28,30,0.82);
-  --label-primary: #FFFFFF;
-  --label-secondary: rgba(235,235,245,0.6);
-  --label-tertiary: rgba(235,235,245,0.4);
-  --label-quaternary: rgba(235,235,245,0.25);
-  --separator: rgba(84,84,88,0.65);
-  --accent: #D97706;
-  --accent-soft: rgba(217,119,6,0.15);
+  --bg-input:    rgba(118,118,128,0.12);
+
+  --label-primary:     #FFFFFF;
+  --label-secondary:   rgba(235,235,245,0.6);
+  --label-tertiary:    rgba(235,235,245,0.4);
+  --label-quaternary:  rgba(235,235,245,0.25);
+  --label-placeholder: rgba(235,235,245,0.18);
+
+  --separator:        rgba(84,84,88,0.65);
+  --separator-opaque: #48484A;
+
+  --fill-primary:   rgba(120,120,128,0.36);
+  --fill-secondary: rgba(120,120,128,0.32);
+  --fill-tertiary:  rgba(120,120,128,0.24);
+
+  --accent:        #D97706;
+  --accent-hover:  #B45309;
+  --accent-soft:   rgba(217,119,6,0.15);
+  --accent-border: rgba(217,119,6,0.3);
 }
 
+/* ─── Light theme — iOS 26 exact values ────────────────────────────────── */
 :root[data-theme='light'] {
-  --bg-page: #F2F2F7;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #E5E5EA;
-  --bg-input: rgba(118,118,128,0.12);
-  --bg-navbar: rgba(248,248,250,0.82);
-  --label-primary: #000000;
-  --label-secondary: rgba(60,60,67,0.6);
-  --label-tertiary: rgba(60,60,67,0.4);
-  --label-quaternary: rgba(60,60,67,0.25);
-  --separator: rgba(60,60,67,0.29);
-  --accent: #D97706;
-  --accent-soft: rgba(217,119,6,0.12);
+  --bg-page:     #F2F2F7;
+  --bg-card:     #FFFFFF;
+  --bg-elevated: #F2F2F7;
+  --bg-input:    rgba(118,118,128,0.12);
+
+  --label-primary:     #000000;
+  --label-secondary:   rgba(60,60,67,0.6);
+  --label-tertiary:    rgba(60,60,67,0.3);
+  --label-quaternary:  rgba(60,60,67,0.18);
+  --label-placeholder: rgba(60,60,67,0.18);
+
+  --separator:        rgba(60,60,67,0.29);
+  --separator-opaque: #C6C6C8;
+
+  --fill-primary:   rgba(120,120,128,0.2);
+  --fill-secondary: rgba(120,120,128,0.16);
+  --fill-tertiary:  rgba(120,120,128,0.12);
+
+  --accent:        #D97706;
+  --accent-hover:  #B45309;
+  --accent-soft:   rgba(217,119,6,0.12);
+  --accent-border: rgba(217,119,6,0.25);
 }
 
 @theme inline {
@@ -43,9 +65,45 @@ body {
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
 }
 
+/* ─── Liquid Glass — iOS 26 defining visual ─────────────────────────────── */
+.liquid-glass {
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255,255,255,0.25);
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.1) inset,
+    0 8px 32px rgba(0,0,0,0.12);
+}
+
+.liquid-glass-dark {
+  background: rgba(28,28,30,0.72);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.05) inset,
+    0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ─── iOS-style card shadows ────────────────────────────────────────────── */
+[data-theme='light'] .ios-card {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  border: none;
+}
+
+[data-theme='dark'] .ios-card,
+:root:not([data-theme]) .ios-card {
+  background: #1C1C1E;
+  border: 0.5px solid rgba(255,255,255,0.08);
+  box-shadow: none;
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50%       { opacity: 0.4; }
 }
 
 @keyframes slideDown {
@@ -53,6 +111,6 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Hide scrollbars globally */
+/* ─── Hide scrollbars globally ──────────────────────────────────────────── */
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { display: none; }
