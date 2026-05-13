@@ -1,15 +1,16 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useState } from 'react'
-import { Coffee, Phone, Plus, Search, User } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Coffee, Loader2, Phone, Plus, Search, User } from 'lucide-react'
 import { formatDistanceToNow, isToday, parseISO } from 'date-fns'
 import { toast } from 'sonner'
-import useSWR from 'swr'
+import dynamic from 'next/dynamic'
 import type { Lead, LeadStatus, Profile } from '@/types'
-import CheckInModal from './CheckInModal'
-import LeadDetailsDrawer from './LeadDetailsDrawer'
-import NewLeadModal from './NewLeadModal'
-import ScheduleModal from './ScheduleModal'
+
+const CheckInModal = dynamic(() => import('./CheckInModal'), { ssr: false })
+const LeadDetailsDrawer = dynamic(() => import('./LeadDetailsDrawer'), { ssr: false })
+const NewLeadModal = dynamic(() => import('./NewLeadModal'), { ssr: false })
+const ScheduleModal = dynamic(() => import('./ScheduleModal'), { ssr: false })
 
 interface Props {
   profile: Profile
@@ -38,15 +39,13 @@ function lastVisitLabel(updatedAt: string): string {
   return `Updated ${formatDistanceToNow(d, { addSuffix: true })}`
 }
 
-const fetcher = (url: string) => fetch(url).then(r => r.json())
+const PAGE_SIZE = 20
 
 export default function LeadListView({ profile }: Props) {
-  const { data, isLoading, mutate } = useSWR<{ leads: Lead[] }>(
-    '/api/leads',
-    fetcher,
-    { refreshInterval: 0, revalidateOnFocus: false }
-  )
-  const leads = data?.leads ?? []
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
@@ -58,6 +57,68 @@ export default function LeadListView({ profile }: Props) {
   const [checkInCount, setCheckInCount] = useState(0)
   const [totalKm, setTotalKm] = useState(0)
   const [checkinRefreshKey, setCheckinRefreshKey] = useState(0)
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const isLoadingRef = useRef(false)
+  const isFirstMount = useRef(true)
+  const currentPageRef = useRef(0)
+
+  const fetchLeads = useCallback(async (pageNum: number, isReset: boolean) => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+
+    if (isReset) setIsLoading(true)
+    else setIsFetchingMore(true)
+
+    try {
+      const params = new URLSearchParams({
+        page: String(pageNum),
+        limit: String(PAGE_SIZE),
+        search,
+        status: statusFilter === 'all' ? '' : statusFilter,
+      })
+      const res = await fetch(`/api/leads?${params}`)
+      const d = await res.json() as { leads: Lead[]; hasMore: boolean }
+
+      if (isReset) {
+        setLeads(d.leads)
+      } else {
+        setLeads(prev => [...prev, ...d.leads])
+      }
+      currentPageRef.current = pageNum
+      setHasMore(d.hasMore)
+    } catch {
+      // ignore
+    } finally {
+      isLoadingRef.current = false
+      if (isReset) setIsLoading(false)
+      else setIsFetchingMore(false)
+    }
+  }, [search, statusFilter])
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false
+      void fetchLeads(0, true)
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => { void fetchLeads(0, true) }, 350)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [fetchLeads])
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting && hasMore && !isLoadingRef.current) {
+        void fetchLeads(currentPageRef.current + 1, false)
+      }
+    }, { threshold: 0.1 })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [fetchLeads, hasMore])
 
   const fetchTodayStats = useCallback(async () => {
     try {
@@ -80,45 +141,23 @@ export default function LeadListView({ profile }: Props) {
   }, [fetchTodayStats])
 
   useEffect(() => {
-    const refresh = () => { void mutate() }
+    const refresh = () => { void fetchLeads(0, true) }
     window.addEventListener('lead-created', refresh)
     return () => window.removeEventListener('lead-created', refresh)
-  }, [mutate])
+  }, [fetchLeads])
 
   const leadsToday = leads.filter(l => isToday(parseISO(l.created_at))).length
 
-  const filtered = leads.filter(l => {
-    const matchSearch = l.cafe_name.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'all' || l.status === statusFilter
-    return matchSearch && matchStatus
-  })
-
-  function openDrawer(lead: Lead) {
-    setSelectedLead(lead)
-    setIsDrawerOpen(true)
-  }
-
-  function openCheckIn(lead: Lead) {
-    setSelectedLead(lead)
-    setIsCheckInOpen(true)
-  }
-
-  function openSchedule(lead: Lead) {
-    setSelectedLead(lead)
-    setIsScheduleOpen(true)
-  }
+  function openDrawer(lead: Lead) { setSelectedLead(lead); setIsDrawerOpen(true) }
+  function openCheckIn(lead: Lead) { setSelectedLead(lead); setIsCheckInOpen(true) }
+  function openSchedule(lead: Lead) { setSelectedLead(lead); setIsScheduleOpen(true) }
 
   function handleLeadUpdate(updated: Lead) {
     setSelectedLead(updated)
-    void mutate(
-      d => d ? { leads: d.leads.map(l => l.id === updated.id ? updated : l) } : d,
-      { revalidate: false }
-    )
+    setLeads(prev => prev.map(l => l.id === updated.id ? updated : l))
   }
 
-  function handleLeadScheduled(updated: Lead) {
-    handleLeadUpdate(updated)
-  }
+  function handleLeadScheduled(updated: Lead) { handleLeadUpdate(updated) }
 
   function handleCheckInSuccess(updated: Lead) {
     handleLeadUpdate(updated)
@@ -128,24 +167,18 @@ export default function LeadListView({ profile }: Props) {
   function handleLeadDelete(leadId: string) {
     setIsDrawerOpen(false)
     setSelectedLead(null)
-    void mutate(
-      d => d ? { leads: d.leads.filter(l => l.id !== leadId) } : d,
-      { revalidate: false }
-    )
+    setLeads(prev => prev.filter(l => l.id !== leadId))
   }
 
   function handleLeadCreated(newLead: Lead) {
     setIsNewLeadOpen(false)
     toast.success('Lead added!')
-    void mutate(
-      d => d ? { leads: [newLead, ...d.leads] } : { leads: [newLead] },
-      { revalidate: false }
-    )
+    setLeads(prev => [newLead, ...prev])
   }
 
   return (
     <div style={{ background: 'var(--bg-page)', paddingBottom: '100px' }}>
-      {/* Stats row — horizontal scroll */}
+      {/* Stats row */}
       <div
         style={{ display: 'flex', gap: '10px', padding: '16px', overflowX: 'auto' }}
         className="[&::-webkit-scrollbar]:hidden"
@@ -243,7 +276,7 @@ export default function LeadListView({ profile }: Props) {
               />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : leads.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 0', textAlign: 'center' }}>
             <Coffee size={40} style={{ color: 'var(--label-quaternary)' }} />
             <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 500, color: 'var(--label-secondary)' }}>No leads found</p>
@@ -251,7 +284,7 @@ export default function LeadListView({ profile }: Props) {
           </div>
         ) : (
           <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden' }}>
-            {filtered.map((lead, index) => {
+            {leads.map((lead, index) => {
               const meta = STATUS_META[lead.status]
               return (
                 <Fragment key={lead.id}>
@@ -279,7 +312,7 @@ export default function LeadListView({ profile }: Props) {
                           {lead.cafe_name}
                         </p>
                         {lead.location_address && (
-                          <p style={{ marginTop: '2px', fontSize: '13px', color: 'var(--label-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <p style={{ marginTop: '2px', fontSize: '13px', color: 'var(--label-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 'calc(100% - 120px)' }}>
                             {lead.location_address}
                           </p>
                         )}
@@ -344,7 +377,7 @@ export default function LeadListView({ profile }: Props) {
                             padding: '7px 14px',
                             fontSize: '15px',
                             fontWeight: 500,
-                            color: 'rgba(235,235,245,0.7)',
+                            color: 'var(--label-secondary)',
                             border: 'none',
                             cursor: 'pointer',
                           }}
@@ -374,6 +407,16 @@ export default function LeadListView({ profile }: Props) {
                 </Fragment>
               )
             })}
+          </div>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} style={{ height: 1 }} />
+
+        {/* Fetch-more indicator */}
+        {isFetchingMore && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
+            <Loader2 size={20} className="animate-spin" style={{ color: 'var(--label-tertiary)' }} />
           </div>
         )}
       </div>

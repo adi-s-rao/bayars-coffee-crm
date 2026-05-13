@@ -1,0 +1,14 @@
+{
+  "name": "Bayar's Coffee CRM",
+  "short_name": "Bayar's CRM",
+  "description": "SFA CRM for Bayar's cafe sales team",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#D97706",
+  "background_color": "#000000",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

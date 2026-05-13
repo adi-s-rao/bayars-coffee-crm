@@ -11,7 +11,7 @@ function isValidStatus(s: string): s is LeadStatus {
   return (VALID_STATUSES as string[]).includes(s)
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -26,19 +26,37 @@ export async function GET() {
     const p = profile as Pick<Profile, 'role'> | null
     const isManager = p?.role === 'manager'
 
-    const adminClient = createAdminClient()
-    const query = adminClient
-      .from('leads')
-      .select('*')
-      .order('updated_at', { ascending: false })
+    const { searchParams } = new URL(request.url)
+    const page = Math.max(0, parseInt(searchParams.get('page') ?? '0'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
+    const search = searchParams.get('search') ?? ''
+    const status = searchParams.get('status') ?? ''
 
-    const { data, error } = isManager
-      ? await query
-      : await query.eq('created_by', user.id)
+    const adminClient = createAdminClient()
+    let query = adminClient
+      .from('leads')
+      .select('*', { count: 'exact' })
+      .order('updated_at', { ascending: false })
+      .range(page * limit, (page + 1) * limit - 1)
+
+    if (!isManager) {
+      query = query.eq('created_by', user.id)
+    }
+    if (search) {
+      query = query.ilike('cafe_name', `%${search}%`)
+    }
+    if (status && isValidStatus(status)) {
+      query = query.eq('status', status)
+    }
+
+    const { data, error, count } = await query
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    return NextResponse.json({ leads: data ?? [] })
+    const total = count ?? 0
+    const hasMore = (page + 1) * limit < total
+
+    return NextResponse.json({ leads: data ?? [], total, hasMore, page })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

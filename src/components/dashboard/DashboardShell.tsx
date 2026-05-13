@@ -19,9 +19,11 @@ import {
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
 import { format } from 'date-fns'
-import SettingsModal from './SettingsModal'
-import NotificationPanel from './NotificationPanel'
+import dynamic from 'next/dynamic'
 import { useTheme } from '@/contexts/ThemeContext'
+
+const SettingsModal = dynamic(() => import('./SettingsModal'), { ssr: false })
+const NotificationPanel = dynamic(() => import('./NotificationPanel'), { ssr: false })
 
 interface DayState {
   started: boolean
@@ -427,25 +429,24 @@ export default function DashboardShell({ profile, children }: Props) {
       </div>
 
       {/* Main content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1" style={{ paddingBottom: 90 }}>{children}</main>
 
       {/* Floating Pill Tab Bar */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-[1000]"
-        style={{ padding: '0 24px 20px', pointerEvents: 'none' }}
+        style={{ padding: '0 20px 16px', pointerEvents: 'none' }}
       >
         <div
           style={{
             display: 'flex',
-            height: '64px',
             alignItems: 'center',
             justifyContent: 'space-around',
-            padding: '0 8px',
-            background: isDark ? 'rgba(28,28,30,0.82)' : 'rgba(255,255,255,0.82)',
+            padding: '10px 4px',
+            background: isDark ? 'rgba(28,28,30,0.85)' : 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(40px) saturate(180%)',
             WebkitBackdropFilter: 'blur(40px) saturate(180%)',
             border: isDark ? '0.5px solid rgba(255,255,255,0.12)' : '0.5px solid rgba(255,255,255,0.7)',
-            borderRadius: '28px',
+            borderRadius: 30,
             boxShadow: isDark
               ? '0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.05) inset'
               : '0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(255,255,255,0.8) inset',
@@ -453,7 +454,7 @@ export default function DashboardShell({ profile, children }: Props) {
           }}
         >
           {NAV_ITEMS.map(({ label, href, Icon }) => {
-            const active = pathname === href
+            const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
             const isReports = href === '/dashboard/reports'
             const inactiveColor = isReports && !isManager
               ? (isDark ? 'rgba(235,235,245,0.25)' : 'rgba(60,60,67,0.25)')
@@ -469,11 +470,24 @@ export default function DashboardShell({ profile, children }: Props) {
                     startTransition(() => router.push(href))
                   }
                 }}
-                className="flex min-w-[56px] flex-col items-center gap-[3px] py-2 transition-all active:scale-[0.88]"
-                style={{ textDecoration: 'none' }}
+                style={{
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 3,
+                  padding: '6px 18px',
+                  borderRadius: 20,
+                  transition: 'transform 0.1s',
+                }}
+                className="active:scale-[0.88]"
               >
-                <Icon size={24} color={active ? '#D97706' : inactiveColor} />
-                <span style={{ fontSize: '11px', fontWeight: 400, color: active ? '#D97706' : inactiveColor }}>
+                <Icon
+                  size={22}
+                  color={active ? '#D97706' : inactiveColor}
+                  strokeWidth={active ? 2.5 : 1.8}
+                />
+                <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, color: active ? '#D97706' : inactiveColor }}>
                   {label}
                 </span>
               </Link>
@@ -485,7 +499,7 @@ export default function DashboardShell({ profile, children }: Props) {
       {/* Notification Panel */}
       {notifOpen && (
         <NotificationPanel
-          payload={notifPayload as Parameters<typeof NotificationPanel>[0]['payload']}
+          payload={notifPayload as never}
           profile={profile}
           onClose={() => setNotifOpen(false)}
         />

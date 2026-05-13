@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import './globals.css'
 
 const geistSans = Geist({
@@ -17,10 +18,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bayar's Coffee CRM",
   description: 'SFA CRM for Bayar\'s cafe sales team',
+  manifest: '/manifest.json',
   other: {
-    'theme-color': '#0A0A0A',
+    'theme-color': '#D97706',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': "Bayar's CRM",
   },
 }
 
@@ -40,6 +43,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
+          <ServiceWorkerRegistration />
           {children}
           <Toaster position="top-center" theme="dark" richColors />
         </ThemeProvider>

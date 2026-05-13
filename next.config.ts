@@ -7,10 +7,13 @@ const nextConfig: NextConfig = {
       dynamic: 30,
       static: 180,
     },
+    optimizePackageImports: ['lucide-react', 'date-fns'],
   },
   turbopack: {
     root: path.resolve(__dirname),
   },
+  compress: true,
+  poweredByHeader: false,
 };
 
 export default nextConfig;

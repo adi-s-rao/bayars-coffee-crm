@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* ─── Color scheme — native input styling ───────────────────────────────── */
+:root[data-theme='dark'], :root:not([data-theme]) { color-scheme: dark; }
+:root[data-theme='light'] { color-scheme: light; }
+
 /* ─── Dark theme (default) ──────────────────────────────────────────────── */
 :root[data-theme='dark'], :root:not([data-theme]) {
   --bg-page:     #000000;
@@ -30,7 +34,7 @@
 :root[data-theme='light'] {
   --bg-page:     #F2F2F7;
   --bg-card:     #FFFFFF;
-  --bg-elevated: #F2F2F7;
+  --bg-elevated: #EFEFF4;
   --bg-input:    rgba(118,118,128,0.12);
 
   --label-primary:     #000000;
